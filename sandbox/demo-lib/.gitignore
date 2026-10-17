@@ -1,0 +1,13 @@
+# construct:begin
+node_modules/
+dist/
+coverage/
+*.log
+*.tsbuildinfo
+.eslintcache
+.DS_Store
+.env
+.env.*
+!.env.example
+.construct/
+# construct:end

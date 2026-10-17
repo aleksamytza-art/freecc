@@ -1,0 +1,109 @@
+# =============================================================================
+# FREECC ROUTER — LiteLLM proxy config (quota-aware free-model pool)
+# =============================================================================
+# Evidence: E14 (Claude Code <-> LiteLLM official tutorial), E11-E13 (free tiers
+# are per-model RPM/TPM/RPD and DO change — quotas are VARIABLES; refresh model
+# IDs against the dashboards listed in router/.env.example), E17 (DeepSeek
+# near-free escalation anchor).
+#
+# ROLE ALIAS CONTRACT (integration trick, evidence E4 + E15):
+#   mikoshi-construct's agents pin Claude Code aliases: implementer -> `sonnet`,
+#   harness/architect -> `inherit` (main model). harness/claude-code.env remaps
+#   ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL onto the three groups below:
+#     opus   = architect / planning / escalation tier (strongest free-or-near-free)
+#     sonnet = implementer / everyday coding tier (fast free workhorses)
+#     haiku  = harness / mechanical verdicts / background tasks (cheapest tier)
+#
+# Start:  router/start.sh    Verify: curl :4000/v1/models -H "Authorization: Bearer $LITELLM_MASTER_KEY"
+# =============================================================================
+
+model_list:
+  # --- GROUP opus: architect tier. Free quotas drain first, near-free paid last.
+  # VERIFY gemini-3-pro free-tier availability in AI Studio before relying on it (E11).
+  - model_name: opus
+    litellm_params:
+      model: gemini/gemini-3-pro
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 2                      # conservative until verified live in your AI Studio dashboard
+      tpm: 32000
+  - model_name: opus
+    litellm_params:
+      model: openrouter/deepseek/deepseek-v3:free   # browse openrouter.ai/models?max_price=0 for today's list (E13)
+      api_key: os.environ/OPENROUTER_API_KEY
+      rpm: 10                     # 50 free req/DAY => keep RPM tiny
+  - model_name: opus
+    litellm_params:
+      model: deepseek/deepseek-reasoner             # near-free paid anchor so the tier never hard-fails (E17)
+      api_key: os.environ/DEEPSEEK_API_KEY
+      rpm: 60
+
+  # --- GROUP sonnet: implementer tier. Fast free workhorses, quota pooling.
+  - model_name: sonnet
+    litellm_params:
+      model: gemini/gemini-3.8-flash                # free tier reported available (E11 secondary — verify)
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 10
+      tpm: 250000
+  - model_name: sonnet
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile           # free tier (E12); TPM community-reported — verify in console
+      api_key: os.environ/GROQ_API_KEY
+      rpm: 30
+      tpm: 6000
+  - model_name: sonnet
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free       # swap for any current :free coder (E13)
+      api_key: os.environ/OPENROUTER_API_KEY
+      rpm: 10
+  - model_name: sonnet
+    litellm_params:
+      model: deepseek/deepseek-chat                 # near-free fallback: work never stalls (E17)
+      api_key: os.environ/DEEPSEEK_API_KEY
+  - model_name: sonnet
+    litellm_params:
+      model: ollama_chat/qwen2.5-coder:7b           # local zero-quota last resort (ollama pull first)
+      api_base: os.environ/OLLAMA_BASE
+
+  # --- GROUP haiku: harness tier. The harness agent only runs commands and
+  # reports a schema-validated JSON verdict (E2/E4) — tiny models suffice.
+  - model_name: haiku
+    litellm_params:
+      model: groq/llama-3.1-8b-instant              # extreme tokens/sec on free tier (E12)
+      api_key: os.environ/GROQ_API_KEY
+      rpm: 30
+      tpm: 6000
+  - model_name: haiku
+    litellm_params:
+      model: gemini/gemini-3.8-flash-lite           # verify current lite-class free tier (E11)
+      api_key: os.environ/GEMINI_API_KEY
+  - model_name: haiku
+    litellm_params:
+      model: ollama_chat/qwen2.5-coder:1.5b         # local fallback
+      api_base: os.environ/OLLAMA_BASE
+
+router_settings:
+  routing_strategy: usage-based-routing-v2   # spread load within group respecting rpm/tpm (E11)
+  num_retries: 2
+  cooldown_time: 60                          # park a deployment 60s after repeated 429s
+  allowed_fails: 2
+  # Quota failover: if a whole group is cooling down, degrade to the next group
+  # instead of stalling; a too-weak answer gets rejected by the mikoshi harness
+  # verdict schema and the ladder escalates (E2) — the failure is safe by design.
+  fallbacks:
+    - opus: ["sonnet", "haiku"]
+    - sonnet: ["haiku", "opus"]
+    - haiku: ["sonnet"]
+  context_window_fallbacks:
+    - opus: ["sonnet"]
+    - sonnet: ["opus"]
+
+litellm_settings:
+  drop_params: true                # free endpoints vary in supported params
+  request_timeout: 600
+  num_retries: 2
+  # Optional hard budget guard (near-free tiers can still cost cents):
+  # max_budget: 5.0
+  # budget_duration: 30d
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

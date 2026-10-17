@@ -1,0 +1,20 @@
+# Normalize line endings: keep LF in the repository so shell scripts and
+# Node ESM files stay POSIX-clean when cloned on Linux/macOS.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.mjs  text eol=lf
+*.ts   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+
+# Binary / OS-specific
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.ico   binary
+*.zip   binary
+*.gz    binary

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "freecc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "FREECC free router (LiteLLM)",
+      "options": {
+        "baseURL": "http://localhost:4000/v1",
+        "apiKey": "{env:LITELLM_MASTER_KEY}"
+      },
+      "models": {
+        "opus": { "name": "architect tier (strongest free/near-free)" },
+        "sonnet": { "name": "implementer tier (free workhorses)" },
+        "haiku": { "name": "harness tier (cheapest/fastest)" }
+      }
+    }
+  },
+  "model": "freecc/sonnet",
+  "small_model": "freecc/haiku"
+}

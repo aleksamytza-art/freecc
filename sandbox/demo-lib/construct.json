@@ -1,0 +1,191 @@
+{
+  "manifestVersion": 6,
+  "construct": "0.43.0",
+  "createdAt": "2026-10-17T11:58:12.555Z",
+  "preset": "node-library",
+  "ai": "claude",
+  "review": null,
+  "harness": {
+    "command": "pnpm run quality"
+  },
+  "report": {
+    "usage": true
+  },
+  "contracts": null,
+  "vars": {
+    "projectName": "demo-lib",
+    "scope": "@demo-lib",
+    "nodeMajor": "20",
+    "contracts": "false",
+    "contractPath": "",
+    "contractTypesOutput": "",
+    "compositionDir": "architecture/composition",
+    "harnessCommand": "pnpm run quality",
+    "packageManager": "pnpm",
+    "pnpmVersion": "",
+    "reviewModel": "claude-sonnet-5",
+    "constructVersion": "0.43.0"
+  },
+  "files": {
+    ".claude/agents/architect.md": "4aa2e01569635a2cfbb3a155d5c35e8b47a4421d2978d2eaad4e54cdd683f27a",
+    ".claude/agents/harness.md": "298fa216335692554475a1af3cbdc2e57a9a02ff4d01dd8842476262e3388d6f",
+    ".claude/agents/implementer.md": "747f0587c6667190cb3765ba00349d92ad37448705b14f0b88ece1e044008067",
+    ".claude/commands/construct-discover.md": "ce1c4fe7419e87f50be7941bc3520ac3241afecd2acbe18c47afbce526543f0e",
+    ".claude/commands/plan.md": "4db59a45d6b23384986d4619d02ba06104dff26f3d411727c17fe480f55fe427",
+    ".claude/rules/conventions.md": "1df1e43e746de65fff26bba2b90f6def7bd1c1b716c65b13ca437669ef1ab7d1",
+    ".claude/rules/secrets.md": "01bb9a99baeca88b7969d116bf6a96b57527d5f38dd56bdcecf8770313f33153",
+    ".claude/rules/tests.md": "f1db64dea1193e23e61f3b5c3f50e9e1d8468968f600d329903e31e2e93a630a",
+    ".claude/skills/browser-lab/SKILL.md": "97b36c5cda51696a4516152d3cb30967dd4bde7d44d8e2bc9c8c2bb676ad1129",
+    ".claude/skills/implement/SKILL.md": "cecf0f5bf3e6c253d9af0a000907ea16112fa0933e295a3d1b1695583693405d",
+    ".claude/skills/intake/SKILL.md": "abe4e0b89dd991205673c2dd3b73682cb0f8db92818387ca112b6cd698b21ad9",
+    ".editorconfig": "a91f1b150e3e82830fb1b4e16a9ef470daf5d71f9e1935a80fdceda8f3bccb8b",
+    ".github/workflows/ci.yml": "ec3501a4b39506803f45a549344b81bf5fbbb723a1effa4b785fbcac8daffc72",
+    ".github/workflows/security.yml": "e81b04407549c5dc68b80c30fbdfe59704d4b2c7479b2af175f8f6200b0e8b39",
+    ".gitignore": "a6440c2d46fb1cff810e175747d777f95dbc6438e98afeff557dfa262f270aec",
+    ".gitleaks.toml": "dd3ffcaeb4e2f4a0b5ba98137796d2cd52f172d76a46af3f3a8b1a1143b72318",
+    ".nvmrc": "5378796307535df3ec8d8b15a2e2dc5641419c3d3060cfe32238c0fa973f7aa3",
+    ".vscode/settings.json": "ebe0b0a73dfb45bf5e8e07875cd4f730b884a0ec251dd77de76af4d1b7ed4e77",
+    "AGENTS.md": "c5a535c4a6e7722e7d50ed9014d15240ef2cdd6cb27784eb44e84a34c6a0f99f",
+    "architecture/checklists.md": "8de2c0a741de5fdeda9fa10254cd17bd3df56bb143d63d27625295ce44030d39",
+    "architecture/decisions/README.md": "35ea243acfb5f48f5550c2a387cd68453616a9e1f035c1a2c56662eb3729c43b",
+    "architecture/open-questions.md": "3135c0bc8b4d7b3e53cf7bbee1e730fa7d87314f86cf9e6cab7e16396cd37328",
+    "architecture/principles.md": "a4f7df9189da8c8099a3137f5d3a4db979878a19a030c3c4f5aee52eeb3152a7",
+    "architecture/security-invariants.md": "de320ff7884c7d881f72c729cc2b3ce4d138c0b394184623b61b60242cf8318a",
+    "CLAUDE.md": "daab34a675adf2e3e55774cbbab1fa3ee990101e51ccd3ea109fa401d7147c16",
+    "eslint.config.mjs": "1e44c7b24217253924d873b882a722b5baf2df9de18c4f9083dc726de48b159d",
+    "package.json": "d37c49f91c4ec8d3ddd5844015e4695d4005767ba69dc530347101fb0689ddf5",
+    "pnpm-workspace.yaml": "63fcd34e2800ca49ef79ebcdb09ade6921567e0f02f2024755f15993628ad82f",
+    "scripts/composition/check.ts": "e43b43089e39d13e03344170f2355a9e6a166d93f11922ac4ce5f458bbfb80f0",
+    "scripts/composition/files.ts": "d01a9045ef9f3f5bfdb8abeec062d152ea9afe903827f55d45eedc979f9bc146",
+    "scripts/composition/model.ts": "c5331c6af3527fbf71e80ec956f52c2af01ed3d7980a976bb093095d7a3dafef",
+    "scripts/composition/render.ts": "8df4b6098cbc0ee600bb930a4d9822a81d32af07b083d5a59cd54ec47f0d9eb9",
+    "scripts/composition/sync-docs.ts": "4514971c4d39b90e6080dd2057adfd5dd7cba3b6b8db2eb9af300aa5aed43c20",
+    "scripts/construct/browser-lab.mjs": "78c81662ffb5ad7e8eb2d388253e080533783368ab2eece9ed50a45f1c17b512",
+    "scripts/construct/browser-witness.mjs": "964afd99cb70192c33256bde26e5463475a15d99c937aa2a9153a5f1929b091d",
+    "scripts/construct/check-acceptance.mjs": "5c8958af12ab15132eb5ab02d441ba6a0fae937884ad40b995556ed0d2d1e342",
+    "scripts/construct/check-baseline.mjs": "eae96c5d3e62de0b0206da7efd9de3d6174a78d81c45faf3f8a34c19b4fefa48",
+    "scripts/construct/implement.workflow": "6f5128137a9fd4ee75a3c04b81e80db5799f7a9ec01a6871b6954fabd72c9137",
+    "scripts/tests/composition/files.test.ts": "098d6026c0552598371fb6fa06bd59e603350d9628848a2d7e97642670455c06",
+    "scripts/tests/composition/model.test.ts": "65cec5b1dbe552fe65b5808156bc6a8f57ffd584e7a666d2976e66321ac846d8",
+    "scripts/tests/composition/render.test.ts": "2425a1b887e751442aac0d7e421f5915cb43d1a4d643007e02d9731241ff6e80",
+    "tsconfig.base.json": "040735e3e4af80365d0b48aac9729f779a1f8d97addee940f39b85d84e0424ad",
+    "tsconfig.json": "fdf79e52ec37a8bfe86710b0a3d8037f6ac0bea760c441548084c8d3798c7f82",
+    "vitest.config.ts": "de133c592e60be354f5d073f633e01b4633f07b5bbf35a566a40dc96876126e4"
+  },
+  "variants": {
+    ".gitignore": "default",
+    "AGENTS.md": "default",
+    "CLAUDE.md": "default"
+  },
+  "blocks": {
+    ".gitignore": {
+      "ownedSha": "2a014a8248041343e32ccbcffe71840e98e7a84b17e49a97a1b4077d942e970e",
+      "vars": {
+        "projectName": "demo-lib",
+        "scope": "@demo-lib",
+        "nodeMajor": "20",
+        "contracts": "false",
+        "contractPath": "",
+        "contractTypesOutput": "",
+        "compositionDir": "architecture/composition",
+        "harnessCommand": "pnpm run quality",
+        "packageManager": "pnpm",
+        "pnpmVersion": "",
+        "reviewModel": "claude-sonnet-5",
+        "constructVersion": "0.43.0"
+      }
+    },
+    "AGENTS.md": {
+      "ownedSha": "f747d86ebd151e3fab8cd4e950e68e489362aefaf72750858ae068a18edea8b1",
+      "vars": {
+        "projectName": "demo-lib",
+        "scope": "@demo-lib",
+        "nodeMajor": "20",
+        "contracts": "false",
+        "contractPath": "",
+        "contractTypesOutput": "",
+        "compositionDir": "architecture/composition",
+        "harnessCommand": "pnpm run quality",
+        "packageManager": "pnpm",
+        "pnpmVersion": "",
+        "reviewModel": "claude-sonnet-5",
+        "constructVersion": "0.43.0"
+      }
+    },
+    "CLAUDE.md": {
+      "ownedSha": "75905c6d88370275f0d6ec691ed00cdd2e7ecd0ff4db16aa77ec835e38071c8b",
+      "vars": {
+        "projectName": "demo-lib",
+        "scope": "@demo-lib",
+        "nodeMajor": "20",
+        "contracts": "false",
+        "contractPath": "",
+        "contractTypesOutput": "",
+        "compositionDir": "architecture/composition",
+        "harnessCommand": "pnpm run quality",
+        "packageManager": "pnpm",
+        "pnpmVersion": "",
+        "reviewModel": "claude-sonnet-5",
+        "constructVersion": "0.43.0"
+      }
+    }
+  },
+  "discovery": {
+    "baseSha": null,
+    "filledAt": null,
+    "markers": {
+      "product": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "module-map": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "commands": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "composition-roots": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "dependency-policy": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "high-effort-areas": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "composition": {
+        "file": "architecture/composition",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "security-invariants": {
+        "file": "architecture/security-invariants.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "defects-vs-variance": {
+        "file": "AGENTS.md",
+        "authoredBy": "unknown",
+        "sha": null
+      },
+      "open-questions": {
+        "file": "architecture/open-questions.md",
+        "authoredBy": "unknown",
+        "sha": null
+      }
+    }
+  },
+  "sync": null,
+  "policy": null
+}

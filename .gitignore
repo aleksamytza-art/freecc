@@ -1,0 +1,27 @@
+# Secrets — never commit real keys (see router/.env.example for the template)
+router/.env
+.env
+.env.*
+!.env.example
+!router/.env.example
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build / runtime output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp

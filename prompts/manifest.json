@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "description": "FREECC prompt library manifest — machine-checked by prompts/validate.mjs (gate G16). Every prompt must: exist, carry the stage/roles/evidence header, contain all required_sections, cite only evidence IDs present in EVIDENCE.md, and be referenced by PLAYBOOK.md (gate G17).",
+  "required_sections": ["## When to use", "## THE PROMPT", "## Output contract", "## Verification"],
+  "header_pattern": "<!-- stage:.+ \\| roles:.+ \\| evidence:.+ \\| gate:.+ -->",
+  "prompts": [
+    { "id": "P0", "file": "P0-research-decompose.md", "stage": "research", "roles": ["build-engineer"], "evidence": ["E1", "E3", "E6", "E7", "E8", "E9", "E10", "E11"] },
+    { "id": "P1", "file": "P1-stack-setup.md", "stage": "setup", "roles": ["setup-agent", "operator"], "evidence": ["E11", "E12", "E13", "E14", "E17"] },
+    { "id": "P2", "file": "P2-discovery.md", "stage": "discovery", "roles": ["discoverer"], "evidence": ["E1", "E3", "E9", "E19"] },
+    { "id": "P3", "file": "P3-plan.md", "stage": "plan", "roles": ["planner"], "evidence": ["E2", "E3"] },
+    { "id": "P4", "file": "P4-implement-brief.md", "stage": "implement", "roles": ["implementer"], "evidence": ["E2", "E3", "E4"] },
+    { "id": "P5", "file": "P5-harness-verdict.md", "stage": "verify", "roles": ["harness"], "evidence": ["E2", "E3", "E4", "E8"] },
+    { "id": "P6", "file": "P6-debate-crosscheck.md", "stage": "verify", "roles": ["solver", "judge"], "evidence": ["E2", "E10"] },
+    { "id": "P7", "file": "P7-architect-escalation.md", "stage": "escalate", "roles": ["architect"], "evidence": ["E2", "E3", "E4"] },
+    { "id": "P8", "file": "P8-retro-tune.md", "stage": "tune", "roles": ["operator", "analyst"], "evidence": ["E1", "E2", "E3"] }
+  ],
+  "playbook": "../PLAYBOOK.md"
+}

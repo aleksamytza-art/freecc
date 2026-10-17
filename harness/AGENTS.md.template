@@ -1,0 +1,63 @@
+# AGENTS.md — externalized repository memory (FREECC template)
+
+> Why this file exists (evidence E3, E9): every fresh agent pays full price to
+> re-explore a repository ("each agent's entry into the repository, paid in full
+> before anything is produced"), and long contexts are used U-shaped — the
+> middle gets lost. The fix is NOT a bigger context window; it is this file:
+> a small, structured, verified memory that every agent (Claude Code, OpenCode,
+> mikoshi roles) reads FIRST. The ten markers below match mikoshi-construct's
+> discovery protocol exactly, so `construct doctor` can mechanically check that
+> they are filled (evidence E19). Fill them via `/construct-discover` or by hand.
+
+## 1. product
+<!-- construct-discover:product -->
+What this product does, for whom, and where a defect costs the most.
+
+## 2. module-map
+<!-- construct-discover:module-map -->
+Directory → responsibility table. One owner per concept.
+
+## 3. commands
+<!-- construct-discover:commands -->
+The exact commands: install, test, lint, build, run, harness (`pnpm run quality`).
+
+## 4. composition-roots
+<!-- construct-discover:composition-roots -->
+Where the system is wired together (entrypoints, DI, config loading).
+
+## 5. dependency-policy
+<!-- construct-discover:dependency-policy -->
+Allowed dependency directions; enforced by lint (architecture/checklists.md).
+
+## 6. high-effort-areas
+<!-- construct-discover:high-effort-areas -->
+Modules where the ladder should start at medium/high: concurrency, money,
+security, schema migrations, anything with a history of repeated failures.
+
+## 7. composition
+<!-- construct-discover:composition -->
+One composition model per real flow (architecture/composition/*.yaml);
+diagrams are rendered from these and checked against code.
+
+## 8. security-invariants
+<!-- construct-discover:security-invariants -->
+| Invariant | Enforced by |
+|-----------|-------------|
+| no committed secrets | gitleaks in .github/workflows/security.yml |
+
+## 9. defects-vs-variance
+<!-- construct-discover:defects-vs-variance -->
+What must be treated as a defect (fails CI) vs acceptable variance (documented).
+
+## 10. open-questions
+<!-- construct-discover:open-questions -->
+Known unknowns. An implementer that hits one reports `blocked` with a precise
+question instead of guessing (evidence E2: a bad brief cost 4.16M tokens once).
+
+---
+### Budget discipline for agents working in this repo (FREECC policy)
+1. Start every task at the LOWEST rung the task class allows (mikoshi ladder E2).
+2. Never self-report success — the harness agent/verifier decides (E2, E8).
+3. Read this file before exploring; update markers you discover to be wrong.
+4. If context grows past ~50% of the model window, stop and write findings into
+   this file or a task note; do NOT rely on the model remembering (E9).
