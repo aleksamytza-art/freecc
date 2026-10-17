@@ -38,6 +38,10 @@ Everything claimed here is backed by `EVIDENCE.md` (ledger E1–E19) and execute
                     architect/implementer/harness agents + ladder (E2)
 ```
 
+> **Setting this up for the first time?** Follow [`SETUP.md`](SETUP.md) — a numbered walkthrough
+> from an empty machine to a working free-LLM stack: every tool, every provider key, and the
+> model-ID verification step that most setups get wrong.
+
 ## Quickstart
 
 ```bash
