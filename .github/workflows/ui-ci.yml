@@ -37,7 +37,9 @@ jobs:
         run: npm run check
 
       - name: Data invariants
-        run: node --test tests/
+        # explicit file path: `node --test tests/` breaks on Node 22 (it tries to
+        # load the directory as a module: "Cannot find module .../ui/tests")
+        run: npm test
 
       - name: Render equivalence + boot checks
         run: node scripts/verify-render.mjs
