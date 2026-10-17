@@ -1,0 +1,43 @@
+name: UI CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-ci.yml'
+  pull_request:
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Data invariants
+        run: node --test tests/
+
+      - name: Render equivalence + boot checks
+        run: node scripts/verify-render.mjs

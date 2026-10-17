@@ -1,0 +1,22 @@
+{
+  "name": "freecc-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FREECC — interactive decomposition, dependency-cloud and verification UI. Zero dependencies, runs offline from the file system.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node --check assets/data.js && node --check assets/app.js",
+    "test": "node --test tests/",
+    "verify:render": "node scripts/verify-render.mjs",
+    "verify": "npm run check && npm test && npm run verify:render"
+  },
+  "files": [
+    "index.html",
+    "assets/",
+    "README.md"
+  ]
+}

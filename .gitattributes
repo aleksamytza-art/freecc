@@ -18,3 +18,7 @@
 *.ico   binary
 *.zip   binary
 *.gz    binary
+
+# The preserved original attachment must keep its exact bytes: its sha256 is
+# documented in ui/README.md and it is the baseline of the equivalence test.
+ui/reference/** -text

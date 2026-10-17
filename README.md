@@ -77,6 +77,26 @@ node cascade/simulate.mjs --n 1000                # strategy simulation (synthet
 | `cascade/` | zero-dep quality-gated cascade router (OpenAI-compatible, ledger, budget guard) + strategy simulation |
 | `gates/` | the gate runner |
 | `sandbox/` | empirical proof: real `mikoshi-construct` install + real `init` output (`sandbox/demo-lib/`, 44 files) |
+| `ui/` | the interactive app: build wizard, dependency cloud, issue ranking, index register, evidence ledger, prompt library, gate report — zero-dependency, runs offline ([`ui/README.md`](ui/README.md)) |
+
+## Interactive UI
+
+`ui/` turns everything above into a working console: state a desired outcome, get a gated issue
+tree, then explore it as a dependency cloud where **an issue with an evidence gap cannot be
+marked resolved**. No dependencies, no build step, no network calls — open `ui/index.html` and it
+runs, or `npm start` for a local URL.
+
+![FREECC UI — dependency cloud](ui/docs/preview.png)
+
+```bash
+cd ui
+npm start                     # http://127.0.0.1:8080
+npm test                      # 14 data invariants (ledger / gates / prompts / DAG)
+npm run verify:render         # headless-Chrome render equivalence vs. the original attachment
+```
+
+`.github/workflows/pages.yml` publishes `ui/` to GitHub Pages, and `ui-ci.yml` re-runs the three
+verification steps on every push.
 
 ## How "budget is divided in a smart way" (three levels, all gated)
 1. **Per call** — cascade tries $0 tiers first; `budget_usd` hard-stops escalation (G13).

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FREECC — Decomposition &amp; Agent UI</title>
+<meta name="description" content="FREECC — an interactive, zero-dependency UI for the decomposition, dependency cloud, evidence ledger (E1-E19), prompt library (P0-P8) and gate report (G01-G18) of a free Claude-Code-class agent stack.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="FREECC — Decomposition &amp; Agent UI">
+<meta property="og:description" content="Describe an outcome; get a gated issue tree. Evidence-gap issues cannot be marked resolved.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">FREECC <small>· decomposition &amp; agent UI · gate-disciplined</small></div>
+  <nav id="nav">
+    <button data-t="build">1 · Build</button>
+    <button data-t="cloud" class="on">2 · Dependency Cloud</button>
+    <button data-t="issues">3 · Issues</button>
+    <button data-t="indexes">4 · Indexes</button>
+    <button data-t="evidence">5 · Evidence</button>
+    <button data-t="prompts">6 · Prompts</button>
+    <button data-t="report">7 · Report</button>
+  </nav>
+  <div class="hdr-right">
+    <span class="chip">project <b id="chipProj">—</b></span>
+    <span class="chip">resolved <b id="chipRes">0/0</b></span>
+    <span class="chip">evidence coverage <b id="chipCov">0%</b></span>
+  </div>
+</header>
+
+<main>
+  <!-- ============ BUILD ============ -->
+  <section id="tab-build" class="tab">
+    <h2>Enter the project — describe the output; the P0 methodology does the decomposition</h2>
+    <p class="lead">This wizard is prompt <b class="mono">P0</b> (research &amp; decompose) encoded as an interface: your desired result becomes <b>L0</b>, detected outcome-domains become <b>L0.x</b>, the proven FREECC engine (L1 → C1–C5 → 18 sub-issues, all gate-backed) is attached underneath, and every generated issue carries variables, roles, method→evidence links (E#), a spectral index (I#), a mechanical gate (G#) and the recommended prompt (P#). Truth rule enforced by the UI: <b>an issue with an evidence gap cannot be marked resolved</b> — it must go through P0 step 2 first.</p>
+    <div class="steps"><span id="st1" class="on">1 · Describe</span><span id="st2">2 · Scope</span><span id="st3">3 · Generate</span></div>
+    <div class="card" id="wiz1">
+      <h3>Desired result (state it first — the root of the tree)</h3>
+      <textarea id="inDesc" placeholder="e.g. Paid bookings per week for travel destinations D, fed by qualified leads from SEO landing pages and email campaigns, produced and maintained at $0 marginal model cost."></textarea>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1; min-width:200px"><h3>Inputs provided</h3><input type="text" id="inInputs" placeholder="destination list, brand assets, payment provider, repos…"></div>
+        <div style="flex:1; min-width:200px"><h3>Budget</h3><input type="text" id="inBudget" placeholder="$0 routine / ≤$5 anchor"></div>
+        <div style="flex:1; min-width:200px"><h3>Deadline</h3><input type="text" id="inDeadline" placeholder="first funnel live in 7 days"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="wizNext">Detect components →</button><button class="btn dim" id="loadBaseline">Load FREECC baseline tree instead</button></div>
+    </div>
+    <div class="card" id="wiz2" style="display:none">
+      <h3>Detected outcome-domains (click to toggle) — each becomes an L0.x child + a component with sub-issues</h3>
+      <div id="domList"></div>
+      <p class="small muted" style="margin-top:8px">The engine layers (C1 routing · C2 harness · C3 construct · C4 context · C5 economy) are always included — they are the proven means (gates G01–G18).</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" id="wizBack">← back</button><button class="btn" id="wizGen">Generate dependency cloud →</button></div>
+    </div>
+    <div class="card" id="wiz3" style="display:none">
+      <h3>Generated</h3>
+      <div id="genSummary"></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="goCloud">Open dependency cloud →</button></div>
+    </div>
+  </section>
+
+  <!-- ============ CLOUD ============ -->
+  <section id="tab-cloud" class="tab on">
+    <div id="cloudWrap">
+      <div id="cloudTools">
+        <input type="text" id="search" placeholder="search id / title…">
+        <button class="btn dim" id="btnFit">fit</button>
+        <button class="btn dim" id="btnRelax">re-layout</button>
+        <button class="btn dim" id="btnCritical">critical chain</button>
+      </div>
+      <svg id="cloud" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="legend">
+        <span class="dot" style="background:var(--gr)"></span>resolved (gate green)
+        <span class="dot" style="background:var(--am)"></span>open/actionable
+        <span class="dot" style="background:#5b6a82"></span>locked (prereq open)
+        <span class="dot" style="background:var(--bl)"></span>working ·
+        size = resolution priority (unlock power) · arrow = prerequisite → dependent · resolution flows left → right toward the output
+      </div>
+    </div>
+    <div id="side"></div>
+  </section>
+
+  <!-- ============ ISSUES ============ -->
+  <section id="tab-issues" class="tab">
+    <h2>All issues — sorted by importance of resolving (unlock power)</h2>
+    <p class="lead">Priority = own weight + total weight of everything this issue transitively unlocks. Atomic blockers rank top: resolving them frees the largest part of the tree. Click a row to open it in the cloud.</p>
+    <div class="card" style="padding:6px"><table id="issueTable"></table></div>
+  </section>
+
+  <!-- ============ INDEXES ============ -->
+  <section id="tab-indexes" class="tab">
+    <h2>Spectral indexes I1–I9 — the measurable layer</h2>
+    <p class="lead">Each index has an instrument (a real file/command that reads it) and a tuning rule in <b class="mono">P8</b>. Values are session-local; wire them to <b class="mono">.construct/runs.jsonl</b>, <b class="mono">cascade/ledger.jsonl</b> and <b class="mono">construct cost --json</b> in production.</p>
+    <div class="grid" id="idxGrid"></div>
+  </section>
+
+  <!-- ============ EVIDENCE ============ -->
+  <section id="tab-evidence" class="tab">
+    <h2>Evidence ledger E1–E19 — no strategy without a ledger ID</h2>
+    <p class="lead">Type: <b>P</b> primary (vendor/paper) · <b>S</b> secondary (re-verify before reliance) · <b>E</b> empirical (executed in the workspace sandbox, reproducible via gates). The prompt-library validator (G16) fails the build if any prompt cites an E# missing here.</p>
+    <div class="card" style="padding:6px"><table id="evTable"></table></div>
+  </section>
+
+  <!-- ============ PROMPTS ============ -->
+  <section id="tab-prompts" class="tab">
+    <h2>Prompt library P0–P8 — the definitive instructions</h2>
+    <p class="lead">Machine-validated by <b class="mono">prompts/validate.mjs</b> (gate G16). Each issue in the cloud recommends one; copy it into your harness (Claude Code via router, OpenCode, or any agent) with the issue's context pointers.</p>
+    <div id="promptList"></div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section id="tab-report" class="tab">
+    <h2>Mechanical gates G01–G18 — the only definition of “done”</h2>
+    <p class="lead">Replay of the real gate run (2026-10-17, workspace sandbox — authoritative source: <b class="mono">REPORT.md</b>, produced by <b class="mono">gates/run-gates.sh</b>; this panel never edits it, it renders it). Truth rule #1: no result without a gate.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn ghost" id="btnReplay">▶ replay gate run</button><span id="replayState" class="small muted"></span></div>
+    <div class="card" style="padding:6px"><table id="gateTable"></table></div>
+  </section>
+</main>
+
+<footer>
+  <span id="footCounts">—</span>
+  <span class="chip">per-call: <b>cascade $0-first (G13)</b></span>
+  <span class="chip">per-task: <b>ladder low→high (G06)</b></span>
+  <span class="chip">per-day: <b>quota pool + failover (G09/G10)</b></span>
+  <div id="ticker"></div>
+</footer>
+<div id="toast"></div>
+
+<!-- ===================== prompt templates (raw text, copied verbatim) ===================== -->
+<script type="text/template" id="tpl-P0">
+You are the research-and-build engineer for the challenge below. Operate under GATE DISCIPLINE: a statement is kept only if an executable check or a primary source backs it. You do not invent tools, numbers, or strategies; you assemble proven pieces and prove the assembly.
+
+CHALLENGE: <one paragraph; state the DESIRED RESULT first, then constraints>
+BUDGET: <$0 / near-free cap $X>   DEADLINE: <...>   MACHINE: <os, node/python versions>
+INPUTS PROVIDED: <data, credential locations, destination lists, repos — or "none">
+
+PROCESS — in order, none skipped:
+1. VERIFY EXISTENCE of every named tool/package/model/API against its PRIMARY registry (npm/pypi/GitHub/vendor docs). Record version, license, last-publish date. Nonexistent -> say so, propose the closest real alternative.
+2. BUILD THE EVIDENCE LEDGER (EVIDENCE.md): E1..En {claim as used, URL, type P/S/E}. Secondary numbers re-verified before reliance. No strategy without a ledger ID.
+3. DECOMPOSE FROM THE DESIRED RESULT: L0 -> L1 -> L2 components -> L3 sub-issues -> L4 tasks. Every node: statement, VARIABLES, ROLES, METHOD+USE CASE (mapped to E#), EXPECTED RESULT, MECHANICAL GATE, dependencies. Draw the chain.
+4. DEFINE SPECTRAL INDEXES: a measurable number per component + the instrument that reads it + the tuning rule.
+5. BUILD THE SMALLEST THING THAT PROVES THE RISKIEST ASSUMPTION FIRST.
+6. WRITE THE GATE RUNNER BEFORE THE POLISH: executable checks, PASS/FAIL table, evidence excerpts, exit non-zero on any FAIL.
+7. RUN -> RED -> DIAGNOSE -> FIX -> RE-RUN FROM THE BEGINNING. Never delete a failing gate to get green.
+8. CLOSE WITH THE HONESTY LEDGER: open questions OQ-n, labeled assumptions, limits, and what would FALSIFY the result. Simulations labeled simulations. Externalized memory over pasted context (E9); budget spent only when verification proves it needed (E3); scaffold quality first-order (E8); cheap-first with verified escalation (E6,E7); debate before paying more (E10); quotas as drifting variables (E11).
+
+OUTPUT: ISSUE-TREE.md, EVIDENCE.md, REPORT.md (gate-generated), working code, PLAYBOOK section.
+SELF-VERIFICATION: gates green on fresh checkout; every claim carries an E#; every E# resolves; every OQ answered or handed to the operator.
+</script>
+<script type="text/template" id="tpl-P1">
+You are the setup agent for the FREECC stack in <repo path>. GOAL: `bash gates/run-gates.sh` exits 0 on THIS machine and the router is live on :4000 serving groups opus|sonnet|haiku (E14).
+
+1. Read EVIDENCE.md and router/.env.example. Do NOT invent model IDs, quotas, or endpoints.
+2. Collect keys — ask for exactly the missing ones: GEMINI_API_KEY (free), GROQ_API_KEY (free), OPENROUTER_API_KEY (free; 50 free-req/day cap, E13), DEEPSEEK_API_KEY (optional near-free anchor, E17). Keys ONLY into router/.env.
+3. VERIFY CURRENT REALITY: (a) fetch each provider's model list and confirm every ID in router/litellm.config.yaml exists TODAY; drift -> update config + .env.example + record old->new in SETUP-NOTES.md. (b) read the dashboards' rate-limit pages; write OBSERVED rpm/tpm/rpd into SETUP-NOTES.md; set config caps to observed values, not hopes.
+4. Run gates. Red -> diagnose, fix, RE-RUN FROM THE BEGINNING. Never edit a gate to pass.
+5. Start router/start.sh; one 10-token smoke call per group through :4000; record latency, answering tier, 429s in SETUP-NOTES.md.
+6. Provider unavailable -> comment out its deployments, rely on fallback chains, open an OQ. Degraded != fake-green.
+
+STOP CONDITIONS: missing key -> name it; unreachable provider -> degrade and record; unverifiable claim -> SETUP-NOTES "UNVERIFIED" section.
+OUTPUT: REPORT.md (gate-generated) + SETUP-NOTES.md {IDs with confirming endpoint, observed quotas, smoke results, changes, UNVERIFIED list}.
+</script>
+<script type="text/template" id="tpl-P2">
+You are the discoverer for the repository at <path> (mikoshi construct present; markers named in AGENTS.md). In Claude Code this is /construct-discover.
+
+Fill the TEN markers — product, module-map, commands, composition-roots, dependency-policy, high-effort-areas, composition, security-invariants, defects-vs-variance, open-questions — by READING CODE ONLY.
+
+RULES:
+1. Every claim cites file path(s) actually opened. Uncitable claim -> open-questions as hypothesis, never a marker fact (E1).
+2. POINTERS OVER PAYLOADS: markers hold maps and rules, not pasted code — the middle of long context gets lost (E9).
+3. high-effort-areas MUST include money, auth/PII, schemas/migrations, concurrency, and repeat-failure modules.
+4. dependency-policy names the LINT RULE enforcing it — a policy nobody validates against is another README (E1).
+5. security-invariants rows: Invariant | Enforced by (named check).
+6. commands: exact harness command from construct.json + install/build/test/run.
+7. Existing sections elsewhere -> the marker POINTS at them; never duplicate.
+
+FINISH: `npx mikoshi-construct doctor` — zero missing markers, zero GLITCH, or iterate. Entry cost is the dominant spend (E3); this file amortizes every future agent entry.
+OUTPUT: filled AGENTS.md + doctor transcript.
+</script>
+<script type="text/template" id="tpl-P3">
+FEATURE: <one paragraph, user-visible outcome, one repo>
+
+Turn this feature into 2–6 tasks. For EACH task output:
+- id, one sentence, ONE owner module (cross-module = two tasks + dependency, never one)
+- effort class low|medium|high WITH RATIONALE. Default low. Force high for money, auth/PII, schemas/migrations, concurrency, or AGENTS.md high-effort-areas (E2: the ladder may start high when the task warrants it).
+- acceptance criteria: each an EXECUTABLE check witnessable RED before implementation exists and GREEN after (E2). Cannot state the red -> it is intent, not a criterion; rewrite.
+- harness command(s) from AGENTS.md §commands (default `pnpm run quality`)
+- depends-on / parallel-safe flag
+
+CONTRADICTION CHECK BEFORE OUTPUT (a cost gate, not a nicety): conflicting criteria, conflict with contracts/api/openapi.yaml, or a term with two design-changing readings -> STOP, output ONLY the questions. E3 measured one contradictory brief at 4.16M tokens burned for nothing; questions are free.
+
+OUTPUT: task table {id, sentence, class+rationale, criteria[] with witness commands, harness, depends-on} + questions block (empty if none).
+</script>
+<script type="text/template" id="tpl-P4">
+TASK: <one sentence from the P3 table — one owner, one module>
+EFFORT CLASS: <low|medium|high>   RUNG: <1..4 of the ladder (E2)>
+
+CONTEXT POINTERS (never pasted code — E9): AGENTS.md §module-map, §commands; files <paths>; design spec <path if any>; previous failure excerpt <text if any>.
+
+ACCEPTANCE CRITERIA (witnessed red before you start, green when you finish — E2):
+  A1: <command> -> expect <exact failure signature> now, success after
+  A2: ...
+HARNESS COMMAND: <pnpm run quality>
+
+CONSTRAINTS (from the materialized implementer role, E4):
+- Implement ONLY the requested change; follow the neighbouring pattern.
+- No new abstraction, dependency, or layer; touch no unrelated module.
+- HTTP route touched -> contracts/api/openapi.yaml FIRST, regenerate types, then implement.
+- NEVER delete/skip/weaken a test (.skip/.only/xfail are harness-caught, E4). Changed logic module ships its test in the same change.
+- Read the previous failure excerpt first; fix the CAUSE, not the symptom.
+- Run the harness before reporting; unclear failure after two attempts -> report failed with the excerpt, do not loop.
+- Do not commit.
+
+BLOCKED RULE: ambiguity about a contract, boundary, or which of two designs is meant -> STOP, report blocked with ONE precise question. Do not pick one (E3: guessing cost 4.16M tokens once).
+
+OUTPUT — exact JSON, schema-validated (E2): {"status":"done|failed|blocked","summary":"...","files":["..."],"harnessTail":"<verbatim tail>","question":"<the one question, or empty>"}
+A response the schema rejects is NOT re-asked — a second attempt buys another entry, not another answer (E3).
+</script>
+<script type="text/template" id="tpl-P5">
+You are the HARNESS. You verify; you NEVER fix, never edit a file, never choose leniency (E4).
+
+INPUT: task brief (P4), implementer REPORT JSON, harness command(s), base tree state.
+
+DO, IN ORDER:
+1. BASE PREFLIGHT: harness command against the base first. Unidentifiable base red -> verdict inconclusive, run nothing else (E2: a pinned base may run; a rung passes when it ADDS NONE).
+2. Run harness command(s) against the working tree; capture the tail VERBATIM. Extra commands for the touched area from AGENTS.md §commands too.
+3. WITNESS each acceptance criterion: RED before the change, GREEN after (E2). Never-red = never a criterion.
+4. TEST-WEAKENING SCAN of the diff (E4 patterns): deleted/renamed tests, added .skip( / .only(, added pytest skip/xfail. Any hit -> testsWeakened=true -> passed=false regardless of green tests.
+5. SECURITY: run checks named in architecture/security-invariants.md (gitleaks et al.) into securityFinding.
+6. GIT DISCIPLINE: git usable only where `git rev-parse --show-toplevel` is the construct directory (E4); otherwise diffStat says so; changedFiles from the implementer report, never a foreign tree.
+
+OUTPUT — exact VERDICT JSON (E2 schema): {"passed":bool,"failureExcerpt":"...","securityFinding":"...","diffStat":"...","testsWeakened":bool,"changedFiles":["..."],"baseSha":"...","headSha":"...","baseInstall":{"command":"...","exitCode":int},"argsSha256":"...","witnesses":[{"criterion":"A1","red":"...","green":"..."}]}
+
+passed=true requires ALL witnesses green AND testsWeakened=false AND no security finding. Schema-invalid output voids the rung — not re-asked (E3). Every rung logs to .construct/runs.jsonl (E2).
+</script>
+<script type="text/template" id="tpl-P6">
+Use ONLY where a mechanical verifier cannot decide: (1) no verifier exists for the artifact, (2) two runs disagreed, (3) cascade is about to escalate and mid-tier is ambiguous — majority sampling at mid is cheaper than one strong call (E10; wired as debate:true in cascade/core.mjs, scenario S2b, gate G14).
+
+STEP 1 — SOLVE: three independent calls, SAME tier, temperature ~0.7, no shared history: <task brief, P4 form>.
+STEP 2 — JUDGE (fourth call; sees ONLY the three answers + acceptance criteria, never who wrote what):
+  "For EACH criterion state which candidates satisfy it, citing the exact part. Majority agreement is evidence, not proof: a well-argued minority beats a lazy majority (E10). Output JSON {"adopted":id,"votes":{criterion:[ids]},"rationale":"...","concordant":bool}"
+STEP 3 — ROUTE: concordant -> adopt + ledger debate event; if ANY mechanical verifier exists, re-run it on the adopted answer — debate never overrides a red harness (E2). Discordant -> escalate one tier, appending the disagreement summary as the failure excerpt (E2 rule).
+
+Judge output failing the JSON shape voids the round — not re-asked; escalate instead (E3: entries are the cost).
+</script>
+<script type="text/template" id="tpl-P7">
+You are the ARCHITECT. You DESIGN; never write files, never edit code (E4). Read anything; read-only commands only (git log/diff, tests).
+
+Trigger: task blocked, or a rung failed repeatedly, or planned high from the start (E2). Escalation is bought by evidence of failure, never anticipated (E3).
+
+INPUT: brief (P4), ALL failure excerpts + harness verdicts, the blocked question, relevant AGENTS.md markers and architecture/ docs.
+
+PRODUCE, IN ORDER:
+1. DIAGNOSIS: root cause vs symptom, citing files. Contradictory verdicts -> name which is untrustworthy and why (I6 suspicion).
+2. BRIEF INTEGRITY CHECK FIRST: contradictory/under-specified brief -> STOP, output only precise question(s). Do NOT design around a contradiction — E3 measured an architect burning 3.66M tokens designing on a bad brief, returning nothing valid.
+3. DESIGN SPEC: smallest change satisfying every criterion; composition-root impact (architecture/composition/*.yaml); contract impact — HTTP route change => openapi.yaml FIRST + type regen (E4 rule, enforced from the top).
+4. ALTERNATIVES: >=2 considered and why rejected. No rejected alternative = pattern-matching, not design.
+5. REVISED EFFORT CLASS + rationale (E3: class decides entry depth; ladder decides entry count).
+6. HANDOFF: exact files the implementer will touch + witness commands that must be red before implementation resumes (E2).
+
+OUTPUT: design spec (markdown), NO code, ending with the revised effort class.
+</script>
+<script type="text/template" id="tpl-P8">
+You are the analyst for the FREECC stack in <repo path>. Cadence: weekly, or per 20 tasks, or after any escaped defect.
+
+READ (instruments, not opinions): .construct/runs.jsonl (rungs, attempts, outcomes — E2) · cascade/ledger.jsonl (tier used, quota skips, 429 failovers, debate events) · `npx mikoshi-construct cost --json` (tokens per agent, price-weighted — E1) · REPORT.md · SETUP-NOTES.md (observed quotas — P1).
+
+COMPUTE I1–I9 (definitions: ISSUE-TREE.md register): I1 $/task · I2 first-pass rate · I3 escalation rate · I4 failover latency · I5 re-entry tokens · I6 verifier false-pass (last construct mutate) · I7 blocked rate · I8 throughput vs quota pool · I9 escaped-defect rework.
+
+THEN:
+1. Table: index, this period, previous, direction, instrument.
+2. Pick EXACTLY ONE tuning action — largest expected index movement per unit of risk. Legal single actions: swap one model in a group; adjust one rpm/tpm cap to observed quota; move a module into high-effort-areas; tighten the P4 template; schedule batch work after the midnight-PT reset (E11).
+3. PREDICTION + FALSIFIER: "I2 rises X -> >=Y within 20 tasks; else revert." No falsifier = superstition.
+4. If I6 > 0: STOP all tuning — harden the verifier first; every other index is untrustworthy while the harness can false-pass (E2/E8).
+5. Re-run `bash gates/run-gates.sh` FROM THE BEGINNING after the change. Attach the result.
+
+OUTPUT: index table · one change (diff) · prediction + falsifier · gate result · next-retro date. Append to TUNING-LOG.md; never rewrite its history.
+</script>
+
+<!-- ===================== app ===================== -->
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,986 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FREECC — Decomposition &amp; Agent UI</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121722; --panel2:#0e131d; --line:#1e2634; --txt:#dbe4f0; --dim:#8494ab;
+    --cy:#39d2c0; --am:#f5a623; --gr:#4ade80; --rd:#f87171; --bl:#60a5fa; --vi:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--txt); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; display:flex; flex-direction:column; overflow:hidden}
+  code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+  header{display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel2); border-bottom:1px solid var(--line); flex:0 0 auto}
+  .logo{font-weight:800; letter-spacing:.5px; color:var(--cy); font-size:16px; white-space:nowrap}
+  .logo small{color:var(--dim); font-weight:400}
+  nav{display:flex; gap:4px; flex-wrap:wrap}
+  nav button{background:transparent; border:1px solid transparent; color:var(--dim); padding:6px 12px; border-radius:8px; cursor:pointer; font:inherit; font-weight:600}
+  nav button:hover{color:var(--txt)}
+  nav button.on{color:var(--cy); border-color:var(--line); background:var(--panel)}
+  .hdr-right{margin-left:auto; display:flex; gap:8px; align-items:center}
+  .chip{background:var(--panel); border:1px solid var(--line); color:var(--dim); border-radius:999px; padding:3px 10px; font-size:12px; white-space:nowrap}
+  .chip b{color:var(--txt)}
+  main{flex:1 1 auto; overflow:hidden; position:relative}
+  section.tab{display:none; height:100%; overflow:auto; padding:18px}
+  section.tab.on{display:block}
+  #tab-cloud.on{display:flex; overflow:hidden; padding:0}
+  h2{font-size:18px; margin-bottom:10px; color:var(--txt)}
+  h3{font-size:14px; margin:14px 0 6px; color:var(--cy); text-transform:uppercase; letter-spacing:.8px}
+  p.lead{color:var(--dim); max-width:900px; margin-bottom:14px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px}
+  textarea,input[type=text],input[type=number]{width:100%; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:10px; font:inherit}
+  textarea{min-height:110px; resize:vertical}
+  button.btn{background:var(--cy); color:#06231f; border:0; border-radius:8px; padding:9px 16px; font:inherit; font-weight:700; cursor:pointer}
+  button.btn.ghost{background:transparent; color:var(--cy); border:1px solid var(--cy)}
+  button.btn.dim{background:var(--panel); color:var(--txt); border:1px solid var(--line); font-weight:600}
+  button.btn:disabled{opacity:.4; cursor:not-allowed}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  /* cloud */
+  #cloudWrap{flex:1 1 auto; position:relative; min-width:0}
+  #cloud{width:100%; height:100%; display:block; background:radial-gradient(1200px 600px at 30% 20%, #101828 0%, var(--bg) 60%)}
+  #cloudTools{position:absolute; top:10px; left:10px; display:flex; gap:6px; z-index:5; flex-wrap:wrap}
+  #cloudTools input{width:180px; padding:6px 10px}
+  #legend{position:absolute; bottom:10px; left:10px; background:#0b0e14cc; border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:12px; color:var(--dim); z-index:5}
+  .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+  #side{flex:0 0 400px; max-width:44%; border-left:1px solid var(--line); background:var(--panel2); overflow:auto; padding:14px}
+  #side h2{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .badge{font-size:11px; border-radius:6px; padding:2px 8px; font-weight:700; border:1px solid}
+  .b-open{color:var(--am); border-color:var(--am)} .b-res{color:var(--gr); border-color:var(--gr)}
+  .b-work{color:var(--bl); border-color:var(--bl)} .b-lock{color:var(--dim); border-color:var(--dim)}
+  .b-gap{color:var(--rd); border-color:var(--rd)} .b-sim{color:var(--vi); border-color:var(--vi)}
+  .kv{margin:8px 0} .kv b{color:var(--cy); font-size:12px; text-transform:uppercase; letter-spacing:.6px; display:block; margin-bottom:2px}
+  .kv div, .kv p{color:var(--txt)}
+  .pill{display:inline-block; background:var(--panel); border:1px solid var(--line); color:var(--cy); border-radius:6px; padding:1px 7px; margin:2px 3px 2px 0; font-size:12px; cursor:pointer}
+  .pill.g{color:var(--gr)} .pill.i{color:var(--am)} .pill.p{color:var(--vi)} .pill.oq{color:var(--rd); cursor:default}
+  .sub{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:6px 0; cursor:pointer; color:var(--txt); font:inherit}
+  .sub:hover{border-color:var(--cy)}
+  .sub .t{display:flex; justify-content:space-between; gap:8px; align-items:center}
+  .bar{height:5px; background:var(--line); border-radius:3px; margin-top:6px; overflow:hidden}
+  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--cy),var(--vi))}
+  pre.tp{background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:10px; white-space:pre-wrap; font-size:12px; max-height:320px; overflow:auto; color:#c8d4e4}
+  table{border-collapse:collapse; width:100%}
+  th,td{border-bottom:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top}
+  th{color:var(--dim); font-size:12px; text-transform:uppercase; letter-spacing:.6px; cursor:pointer; user-select:none}
+  tr:hover td{background:#151c29}
+  td a{color:var(--bl); text-decoration:none; word-break:break-all}
+  .pass{color:var(--gr); font-weight:700} .fail{color:var(--rd); font-weight:700} .pend{color:var(--am); font-weight:700}
+  footer{flex:0 0 auto; display:flex; gap:14px; align-items:center; padding:8px 16px; background:var(--panel2); border-top:1px solid var(--line); font-size:12px; color:var(--dim)}
+  #ticker{margin-left:auto; color:var(--cy); max-width:46%; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  #toast{position:fixed; bottom:52px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--cy); color:var(--txt); padding:10px 18px; border-radius:10px; display:none; z-index:50; max-width:80%}
+  .steps{display:flex; gap:8px; margin-bottom:14px}
+  .steps span{padding:5px 12px; border-radius:999px; border:1px solid var(--line); color:var(--dim); font-size:12px; font-weight:700}
+  .steps span.on{color:#06231f; background:var(--cy); border-color:var(--cy)}
+  .domchip{display:inline-flex; align-items:center; gap:6px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:5px 12px; margin:3px; cursor:pointer; font-size:13px}
+  .domchip.on{border-color:var(--cy); color:var(--cy)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px}
+  svg text{user-select:none}
+  .node circle{cursor:pointer}
+  .node text{fill:var(--txt); font-size:11px; pointer-events:none}
+  .node .nid{font-weight:800; font-size:12px}
+  .edge{fill:none; stroke-width:1.6}
+  details.acc{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:10px}
+  details.acc summary{cursor:pointer; font-weight:700; color:var(--txt)}
+  details.acc summary small{color:var(--dim); font-weight:400; margin-left:8px}
+  .muted{color:var(--dim)} .small{font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">FREECC <small>· decomposition &amp; agent UI · gate-disciplined</small></div>
+  <nav id="nav">
+    <button data-t="build">1 · Build</button>
+    <button data-t="cloud" class="on">2 · Dependency Cloud</button>
+    <button data-t="issues">3 · Issues</button>
+    <button data-t="indexes">4 · Indexes</button>
+    <button data-t="evidence">5 · Evidence</button>
+    <button data-t="prompts">6 · Prompts</button>
+    <button data-t="report">7 · Report</button>
+  </nav>
+  <div class="hdr-right">
+    <span class="chip">project <b id="chipProj">—</b></span>
+    <span class="chip">resolved <b id="chipRes">0/0</b></span>
+    <span class="chip">evidence coverage <b id="chipCov">0%</b></span>
+  </div>
+</header>
+
+<main>
+  <!-- ============ BUILD ============ -->
+  <section id="tab-build" class="tab">
+    <h2>Enter the project — describe the output; the P0 methodology does the decomposition</h2>
+    <p class="lead">This wizard is prompt <b class="mono">P0</b> (research &amp; decompose) encoded as an interface: your desired result becomes <b>L0</b>, detected outcome-domains become <b>L0.x</b>, the proven FREECC engine (L1 → C1–C5 → 18 sub-issues, all gate-backed) is attached underneath, and every generated issue carries variables, roles, method→evidence links (E#), a spectral index (I#), a mechanical gate (G#) and the recommended prompt (P#). Truth rule enforced by the UI: <b>an issue with an evidence gap cannot be marked resolved</b> — it must go through P0 step 2 first.</p>
+    <div class="steps"><span id="st1" class="on">1 · Describe</span><span id="st2">2 · Scope</span><span id="st3">3 · Generate</span></div>
+    <div class="card" id="wiz1">
+      <h3>Desired result (state it first — the root of the tree)</h3>
+      <textarea id="inDesc" placeholder="e.g. Paid bookings per week for travel destinations D, fed by qualified leads from SEO landing pages and email campaigns, produced and maintained at $0 marginal model cost."></textarea>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1; min-width:200px"><h3>Inputs provided</h3><input type="text" id="inInputs" placeholder="destination list, brand assets, payment provider, repos…"></div>
+        <div style="flex:1; min-width:200px"><h3>Budget</h3><input type="text" id="inBudget" placeholder="$0 routine / ≤$5 anchor"></div>
+        <div style="flex:1; min-width:200px"><h3>Deadline</h3><input type="text" id="inDeadline" placeholder="first funnel live in 7 days"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="wizNext">Detect components →</button><button class="btn dim" id="loadBaseline">Load FREECC baseline tree instead</button></div>
+    </div>
+    <div class="card" id="wiz2" style="display:none">
+      <h3>Detected outcome-domains (click to toggle) — each becomes an L0.x child + a component with sub-issues</h3>
+      <div id="domList"></div>
+      <p class="small muted" style="margin-top:8px">The engine layers (C1 routing · C2 harness · C3 construct · C4 context · C5 economy) are always included — they are the proven means (gates G01–G18).</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" id="wizBack">← back</button><button class="btn" id="wizGen">Generate dependency cloud →</button></div>
+    </div>
+    <div class="card" id="wiz3" style="display:none">
+      <h3>Generated</h3>
+      <div id="genSummary"></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="goCloud">Open dependency cloud →</button></div>
+    </div>
+  </section>
+
+  <!-- ============ CLOUD ============ -->
+  <section id="tab-cloud" class="tab on">
+    <div id="cloudWrap">
+      <div id="cloudTools">
+        <input type="text" id="search" placeholder="search id / title…">
+        <button class="btn dim" id="btnFit">fit</button>
+        <button class="btn dim" id="btnRelax">re-layout</button>
+        <button class="btn dim" id="btnCritical">critical chain</button>
+      </div>
+      <svg id="cloud" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="legend">
+        <span class="dot" style="background:var(--gr)"></span>resolved (gate green)
+        <span class="dot" style="background:var(--am)"></span>open/actionable
+        <span class="dot" style="background:#5b6a82"></span>locked (prereq open)
+        <span class="dot" style="background:var(--bl)"></span>working ·
+        size = resolution priority (unlock power) · arrow = prerequisite → dependent · resolution flows left → right toward the output
+      </div>
+    </div>
+    <div id="side"></div>
+  </section>
+
+  <!-- ============ ISSUES ============ -->
+  <section id="tab-issues" class="tab">
+    <h2>All issues — sorted by importance of resolving (unlock power)</h2>
+    <p class="lead">Priority = own weight + total weight of everything this issue transitively unlocks. Atomic blockers rank top: resolving them frees the largest part of the tree. Click a row to open it in the cloud.</p>
+    <div class="card" style="padding:6px"><table id="issueTable"></table></div>
+  </section>
+
+  <!-- ============ INDEXES ============ -->
+  <section id="tab-indexes" class="tab">
+    <h2>Spectral indexes I1–I9 — the measurable layer</h2>
+    <p class="lead">Each index has an instrument (a real file/command that reads it) and a tuning rule in <b class="mono">P8</b>. Values are session-local; wire them to <b class="mono">.construct/runs.jsonl</b>, <b class="mono">cascade/ledger.jsonl</b> and <b class="mono">construct cost --json</b> in production.</p>
+    <div class="grid" id="idxGrid"></div>
+  </section>
+
+  <!-- ============ EVIDENCE ============ -->
+  <section id="tab-evidence" class="tab">
+    <h2>Evidence ledger E1–E19 — no strategy without a ledger ID</h2>
+    <p class="lead">Type: <b>P</b> primary (vendor/paper) · <b>S</b> secondary (re-verify before reliance) · <b>E</b> empirical (executed in the workspace sandbox, reproducible via gates). The prompt-library validator (G16) fails the build if any prompt cites an E# missing here.</p>
+    <div class="card" style="padding:6px"><table id="evTable"></table></div>
+  </section>
+
+  <!-- ============ PROMPTS ============ -->
+  <section id="tab-prompts" class="tab">
+    <h2>Prompt library P0–P8 — the definitive instructions</h2>
+    <p class="lead">Machine-validated by <b class="mono">prompts/validate.mjs</b> (gate G16). Each issue in the cloud recommends one; copy it into your harness (Claude Code via router, OpenCode, or any agent) with the issue's context pointers.</p>
+    <div id="promptList"></div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section id="tab-report" class="tab">
+    <h2>Mechanical gates G01–G18 — the only definition of “done”</h2>
+    <p class="lead">Replay of the real gate run (2026-10-17, workspace sandbox — authoritative source: <b class="mono">REPORT.md</b>, produced by <b class="mono">gates/run-gates.sh</b>; this panel never edits it, it renders it). Truth rule #1: no result without a gate.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn ghost" id="btnReplay">▶ replay gate run</button><span id="replayState" class="small muted"></span></div>
+    <div class="card" style="padding:6px"><table id="gateTable"></table></div>
+  </section>
+</main>
+
+<footer>
+  <span id="footCounts">—</span>
+  <span class="chip">per-call: <b>cascade $0-first (G13)</b></span>
+  <span class="chip">per-task: <b>ladder low→high (G06)</b></span>
+  <span class="chip">per-day: <b>quota pool + failover (G09/G10)</b></span>
+  <div id="ticker"></div>
+</footer>
+<div id="toast"></div>
+
+<!-- ===================== prompt templates (raw text, copied verbatim) ===================== -->
+<script type="text/template" id="tpl-P0">
+You are the research-and-build engineer for the challenge below. Operate under GATE DISCIPLINE: a statement is kept only if an executable check or a primary source backs it. You do not invent tools, numbers, or strategies; you assemble proven pieces and prove the assembly.
+
+CHALLENGE: <one paragraph; state the DESIRED RESULT first, then constraints>
+BUDGET: <$0 / near-free cap $X>   DEADLINE: <...>   MACHINE: <os, node/python versions>
+INPUTS PROVIDED: <data, credential locations, destination lists, repos — or "none">
+
+PROCESS — in order, none skipped:
+1. VERIFY EXISTENCE of every named tool/package/model/API against its PRIMARY registry (npm/pypi/GitHub/vendor docs). Record version, license, last-publish date. Nonexistent -> say so, propose the closest real alternative.
+2. BUILD THE EVIDENCE LEDGER (EVIDENCE.md): E1..En {claim as used, URL, type P/S/E}. Secondary numbers re-verified before reliance. No strategy without a ledger ID.
+3. DECOMPOSE FROM THE DESIRED RESULT: L0 -> L1 -> L2 components -> L3 sub-issues -> L4 tasks. Every node: statement, VARIABLES, ROLES, METHOD+USE CASE (mapped to E#), EXPECTED RESULT, MECHANICAL GATE, dependencies. Draw the chain.
+4. DEFINE SPECTRAL INDEXES: a measurable number per component + the instrument that reads it + the tuning rule.
+5. BUILD THE SMALLEST THING THAT PROVES THE RISKIEST ASSUMPTION FIRST.
+6. WRITE THE GATE RUNNER BEFORE THE POLISH: executable checks, PASS/FAIL table, evidence excerpts, exit non-zero on any FAIL.
+7. RUN -> RED -> DIAGNOSE -> FIX -> RE-RUN FROM THE BEGINNING. Never delete a failing gate to get green.
+8. CLOSE WITH THE HONESTY LEDGER: open questions OQ-n, labeled assumptions, limits, and what would FALSIFY the result. Simulations labeled simulations. Externalized memory over pasted context (E9); budget spent only when verification proves it needed (E3); scaffold quality first-order (E8); cheap-first with verified escalation (E6,E7); debate before paying more (E10); quotas as drifting variables (E11).
+
+OUTPUT: ISSUE-TREE.md, EVIDENCE.md, REPORT.md (gate-generated), working code, PLAYBOOK section.
+SELF-VERIFICATION: gates green on fresh checkout; every claim carries an E#; every E# resolves; every OQ answered or handed to the operator.
+</script>
+<script type="text/template" id="tpl-P1">
+You are the setup agent for the FREECC stack in <repo path>. GOAL: `bash gates/run-gates.sh` exits 0 on THIS machine and the router is live on :4000 serving groups opus|sonnet|haiku (E14).
+
+1. Read EVIDENCE.md and router/.env.example. Do NOT invent model IDs, quotas, or endpoints.
+2. Collect keys — ask for exactly the missing ones: GEMINI_API_KEY (free), GROQ_API_KEY (free), OPENROUTER_API_KEY (free; 50 free-req/day cap, E13), DEEPSEEK_API_KEY (optional near-free anchor, E17). Keys ONLY into router/.env.
+3. VERIFY CURRENT REALITY: (a) fetch each provider's model list and confirm every ID in router/litellm.config.yaml exists TODAY; drift -> update config + .env.example + record old->new in SETUP-NOTES.md. (b) read the dashboards' rate-limit pages; write OBSERVED rpm/tpm/rpd into SETUP-NOTES.md; set config caps to observed values, not hopes.
+4. Run gates. Red -> diagnose, fix, RE-RUN FROM THE BEGINNING. Never edit a gate to pass.
+5. Start router/start.sh; one 10-token smoke call per group through :4000; record latency, answering tier, 429s in SETUP-NOTES.md.
+6. Provider unavailable -> comment out its deployments, rely on fallback chains, open an OQ. Degraded != fake-green.
+
+STOP CONDITIONS: missing key -> name it; unreachable provider -> degrade and record; unverifiable claim -> SETUP-NOTES "UNVERIFIED" section.
+OUTPUT: REPORT.md (gate-generated) + SETUP-NOTES.md {IDs with confirming endpoint, observed quotas, smoke results, changes, UNVERIFIED list}.
+</script>
+<script type="text/template" id="tpl-P2">
+You are the discoverer for the repository at <path> (mikoshi construct present; markers named in AGENTS.md). In Claude Code this is /construct-discover.
+
+Fill the TEN markers — product, module-map, commands, composition-roots, dependency-policy, high-effort-areas, composition, security-invariants, defects-vs-variance, open-questions — by READING CODE ONLY.
+
+RULES:
+1. Every claim cites file path(s) actually opened. Uncitable claim -> open-questions as hypothesis, never a marker fact (E1).
+2. POINTERS OVER PAYLOADS: markers hold maps and rules, not pasted code — the middle of long context gets lost (E9).
+3. high-effort-areas MUST include money, auth/PII, schemas/migrations, concurrency, and repeat-failure modules.
+4. dependency-policy names the LINT RULE enforcing it — a policy nobody validates against is another README (E1).
+5. security-invariants rows: Invariant | Enforced by (named check).
+6. commands: exact harness command from construct.json + install/build/test/run.
+7. Existing sections elsewhere -> the marker POINTS at them; never duplicate.
+
+FINISH: `npx mikoshi-construct doctor` — zero missing markers, zero GLITCH, or iterate. Entry cost is the dominant spend (E3); this file amortizes every future agent entry.
+OUTPUT: filled AGENTS.md + doctor transcript.
+</script>
+<script type="text/template" id="tpl-P3">
+FEATURE: <one paragraph, user-visible outcome, one repo>
+
+Turn this feature into 2–6 tasks. For EACH task output:
+- id, one sentence, ONE owner module (cross-module = two tasks + dependency, never one)
+- effort class low|medium|high WITH RATIONALE. Default low. Force high for money, auth/PII, schemas/migrations, concurrency, or AGENTS.md high-effort-areas (E2: the ladder may start high when the task warrants it).
+- acceptance criteria: each an EXECUTABLE check witnessable RED before implementation exists and GREEN after (E2). Cannot state the red -> it is intent, not a criterion; rewrite.
+- harness command(s) from AGENTS.md §commands (default `pnpm run quality`)
+- depends-on / parallel-safe flag
+
+CONTRADICTION CHECK BEFORE OUTPUT (a cost gate, not a nicety): conflicting criteria, conflict with contracts/api/openapi.yaml, or a term with two design-changing readings -> STOP, output ONLY the questions. E3 measured one contradictory brief at 4.16M tokens burned for nothing; questions are free.
+
+OUTPUT: task table {id, sentence, class+rationale, criteria[] with witness commands, harness, depends-on} + questions block (empty if none).
+</script>
+<script type="text/template" id="tpl-P4">
+TASK: <one sentence from the P3 table — one owner, one module>
+EFFORT CLASS: <low|medium|high>   RUNG: <1..4 of the ladder (E2)>
+
+CONTEXT POINTERS (never pasted code — E9): AGENTS.md §module-map, §commands; files <paths>; design spec <path if any>; previous failure excerpt <text if any>.
+
+ACCEPTANCE CRITERIA (witnessed red before you start, green when you finish — E2):
+  A1: <command> -> expect <exact failure signature> now, success after
+  A2: ...
+HARNESS COMMAND: <pnpm run quality>
+
+CONSTRAINTS (from the materialized implementer role, E4):
+- Implement ONLY the requested change; follow the neighbouring pattern.
+- No new abstraction, dependency, or layer; touch no unrelated module.
+- HTTP route touched -> contracts/api/openapi.yaml FIRST, regenerate types, then implement.
+- NEVER delete/skip/weaken a test (.skip/.only/xfail are harness-caught, E4). Changed logic module ships its test in the same change.
+- Read the previous failure excerpt first; fix the CAUSE, not the symptom.
+- Run the harness before reporting; unclear failure after two attempts -> report failed with the excerpt, do not loop.
+- Do not commit.
+
+BLOCKED RULE: ambiguity about a contract, boundary, or which of two designs is meant -> STOP, report blocked with ONE precise question. Do not pick one (E3: guessing cost 4.16M tokens once).
+
+OUTPUT — exact JSON, schema-validated (E2): {"status":"done|failed|blocked","summary":"...","files":["..."],"harnessTail":"<verbatim tail>","question":"<the one question, or empty>"}
+A response the schema rejects is NOT re-asked — a second attempt buys another entry, not another answer (E3).
+</script>
+<script type="text/template" id="tpl-P5">
+You are the HARNESS. You verify; you NEVER fix, never edit a file, never choose leniency (E4).
+
+INPUT: task brief (P4), implementer REPORT JSON, harness command(s), base tree state.
+
+DO, IN ORDER:
+1. BASE PREFLIGHT: harness command against the base first. Unidentifiable base red -> verdict inconclusive, run nothing else (E2: a pinned base may run; a rung passes when it ADDS NONE).
+2. Run harness command(s) against the working tree; capture the tail VERBATIM. Extra commands for the touched area from AGENTS.md §commands too.
+3. WITNESS each acceptance criterion: RED before the change, GREEN after (E2). Never-red = never a criterion.
+4. TEST-WEAKENING SCAN of the diff (E4 patterns): deleted/renamed tests, added .skip( / .only(, added pytest skip/xfail. Any hit -> testsWeakened=true -> passed=false regardless of green tests.
+5. SECURITY: run checks named in architecture/security-invariants.md (gitleaks et al.) into securityFinding.
+6. GIT DISCIPLINE: git usable only where `git rev-parse --show-toplevel` is the construct directory (E4); otherwise diffStat says so; changedFiles from the implementer report, never a foreign tree.
+
+OUTPUT — exact VERDICT JSON (E2 schema): {"passed":bool,"failureExcerpt":"...","securityFinding":"...","diffStat":"...","testsWeakened":bool,"changedFiles":["..."],"baseSha":"...","headSha":"...","baseInstall":{"command":"...","exitCode":int},"argsSha256":"...","witnesses":[{"criterion":"A1","red":"...","green":"..."}]}
+
+passed=true requires ALL witnesses green AND testsWeakened=false AND no security finding. Schema-invalid output voids the rung — not re-asked (E3). Every rung logs to .construct/runs.jsonl (E2).
+</script>
+<script type="text/template" id="tpl-P6">
+Use ONLY where a mechanical verifier cannot decide: (1) no verifier exists for the artifact, (2) two runs disagreed, (3) cascade is about to escalate and mid-tier is ambiguous — majority sampling at mid is cheaper than one strong call (E10; wired as debate:true in cascade/core.mjs, scenario S2b, gate G14).
+
+STEP 1 — SOLVE: three independent calls, SAME tier, temperature ~0.7, no shared history: <task brief, P4 form>.
+STEP 2 — JUDGE (fourth call; sees ONLY the three answers + acceptance criteria, never who wrote what):
+  "For EACH criterion state which candidates satisfy it, citing the exact part. Majority agreement is evidence, not proof: a well-argued minority beats a lazy majority (E10). Output JSON {"adopted":id,"votes":{criterion:[ids]},"rationale":"...","concordant":bool}"
+STEP 3 — ROUTE: concordant -> adopt + ledger debate event; if ANY mechanical verifier exists, re-run it on the adopted answer — debate never overrides a red harness (E2). Discordant -> escalate one tier, appending the disagreement summary as the failure excerpt (E2 rule).
+
+Judge output failing the JSON shape voids the round — not re-asked; escalate instead (E3: entries are the cost).
+</script>
+<script type="text/template" id="tpl-P7">
+You are the ARCHITECT. You DESIGN; never write files, never edit code (E4). Read anything; read-only commands only (git log/diff, tests).
+
+Trigger: task blocked, or a rung failed repeatedly, or planned high from the start (E2). Escalation is bought by evidence of failure, never anticipated (E3).
+
+INPUT: brief (P4), ALL failure excerpts + harness verdicts, the blocked question, relevant AGENTS.md markers and architecture/ docs.
+
+PRODUCE, IN ORDER:
+1. DIAGNOSIS: root cause vs symptom, citing files. Contradictory verdicts -> name which is untrustworthy and why (I6 suspicion).
+2. BRIEF INTEGRITY CHECK FIRST: contradictory/under-specified brief -> STOP, output only precise question(s). Do NOT design around a contradiction — E3 measured an architect burning 3.66M tokens designing on a bad brief, returning nothing valid.
+3. DESIGN SPEC: smallest change satisfying every criterion; composition-root impact (architecture/composition/*.yaml); contract impact — HTTP route change => openapi.yaml FIRST + type regen (E4 rule, enforced from the top).
+4. ALTERNATIVES: >=2 considered and why rejected. No rejected alternative = pattern-matching, not design.
+5. REVISED EFFORT CLASS + rationale (E3: class decides entry depth; ladder decides entry count).
+6. HANDOFF: exact files the implementer will touch + witness commands that must be red before implementation resumes (E2).
+
+OUTPUT: design spec (markdown), NO code, ending with the revised effort class.
+</script>
+<script type="text/template" id="tpl-P8">
+You are the analyst for the FREECC stack in <repo path>. Cadence: weekly, or per 20 tasks, or after any escaped defect.
+
+READ (instruments, not opinions): .construct/runs.jsonl (rungs, attempts, outcomes — E2) · cascade/ledger.jsonl (tier used, quota skips, 429 failovers, debate events) · `npx mikoshi-construct cost --json` (tokens per agent, price-weighted — E1) · REPORT.md · SETUP-NOTES.md (observed quotas — P1).
+
+COMPUTE I1–I9 (definitions: ISSUE-TREE.md register): I1 $/task · I2 first-pass rate · I3 escalation rate · I4 failover latency · I5 re-entry tokens · I6 verifier false-pass (last construct mutate) · I7 blocked rate · I8 throughput vs quota pool · I9 escaped-defect rework.
+
+THEN:
+1. Table: index, this period, previous, direction, instrument.
+2. Pick EXACTLY ONE tuning action — largest expected index movement per unit of risk. Legal single actions: swap one model in a group; adjust one rpm/tpm cap to observed quota; move a module into high-effort-areas; tighten the P4 template; schedule batch work after the midnight-PT reset (E11).
+3. PREDICTION + FALSIFIER: "I2 rises X -> >=Y within 20 tasks; else revert." No falsifier = superstition.
+4. If I6 > 0: STOP all tuning — harden the verifier first; every other index is untrustworthy while the harness can false-pass (E2/E8).
+5. Re-run `bash gates/run-gates.sh` FROM THE BEGINNING after the change. Attach the result.
+
+OUTPUT: index table · one change (diff) · prediction + falsifier · gate result · next-retro date. Append to TUNING-LOG.md; never rewrite its history.
+</script>
+
+<!-- ===================== app ===================== -->
+<script id="app">
+"use strict";
+/* =========================================================================
+   FREECC Decomposition & Agent UI — single file, zero external resources.
+   Encodes: ISSUE-TREE.md (L0..L4, C1..C5, I-subissues), EVIDENCE.md (E1-E19),
+   REPORT.md (G1-G18, real run 2026-10-17), PLAYBOOK.md (7 truth rules, loop),
+   prompts P0-P8 (bodies in <script type="text/template"> above).
+   Truth rules are enforced in code: evidence-gap nodes cannot resolve (rule 2),
+   resolution requires a green gate or a LABELED simulation (rules 1+6).
+   ========================================================================= */
+
+const EVIDENCE=[
+ {id:"E1",t:"P",u:"https://www.npmjs.com/package/mikoshi-construct",c:"mikoshi-construct v0.43.0 real (MIT, 2026-10-09): materializes architecture policy, API contract, quality harness, agent instructions; doctor/sync/cost/board/mutate/atlas CLIs"},
+ {id:"E2",t:"P+E",u:"https://www.npmjs.com/package/mikoshi-construct",c:"Reasoning-budget ladder low->low->medium->high; phases Preflight->Design->Implement->Verify; schema-validated harness verdicts; a pass is never self-reported; criteria witnessed red-before/green-after"},
+ {id:"E3",t:"P",u:"https://www.npmjs.com/package/mikoshi-construct",c:"Cost data (Opus, 13 runs): low 557-740k tokens, medium 847k-5.9M, high ~14.19M; agent entry into the repo dominates spend; one contradictory brief burned 4.16M tokens for nothing"},
+ {id:"E4",t:"E",u:"https://github.com/E1i/mikoshi-construct",c:"Role model pins verified in materialized files: implementer=model:sonnet/effort:low, harness=inherit (never edits), architect=inherit/effort:xhigh (never writes)"},
+ {id:"E5",t:"P",u:"https://github.com/awslabs/aidlc-workflows",c:"Lineage: AI-DLC from AWS Labs — classify, implement, verify, escalate; one core, many harnesses"},
+ {id:"E6",t:"P",u:"https://arxiv.org/abs/2305.05176",c:"FrugalGPT (Chen/Zaharia/Zou): LLM cascade matches GPT-4 at up to 98% cost reduction, or +4% accuracy at same cost; 1400+ citations"},
+ {id:"E7",t:"P",u:"https://arxiv.org/abs/2406.18665",c:"RouteLLM (LMSYS): preference-trained routers cut cost up to 85% at 95% of GPT-4 performance (MT-Bench); >2x savings; open-source framework"},
+ {id:"E8",t:"P",u:"https://arxiv.org/abs/2405.15793",c:"SWE-agent (NeurIPS 2024): the agent-computer interface (scaffold) significantly enhances model performance — scaffold design is first-order, independent of model size"},
+ {id:"E9",t:"P",u:"https://arxiv.org/abs/2307.03172",c:"Lost in the Middle (TACL 2024): long-context use is U-shaped — huge windows do not behave like effective memory; externalized structured memory is the justified substitute"},
+ {id:"E10",t:"P",u:"https://arxiv.org/abs/2305.14325",c:"Multiagent Debate (Du et al.): multiple LLM instances proposing+critiquing improve factuality and reasoning — basis for a sequence of free agents"},
+ {id:"E11",t:"P+S",u:"https://ai.google.dev/gemini-api/docs/rate-limits",c:"Gemini free tier real: per-model RPM/TPM/RPD, per-project, RPD resets midnight PT, 429 on breach; Google actively reducing free quotas -> quotas are variables"},
+ {id:"E12",t:"P+S",u:"https://console.groq.com/docs/rate-limits",c:"Groq free tier with per-model limits (~6k TPM community-reported on free tier — re-verify in console)"},
+ {id:"E13",t:"P",u:"https://openrouter.ai/docs/faq",c:"OpenRouter free models: 50 free requests/day under $10 credits, 1000/day after; 402/429 handling documented"},
+ {id:"E14",t:"P",u:"https://docs.litellm.ai/docs/tutorials/claude_non_anthropic_models",c:"Claude Code on LiteLLM proxy (official tutorial, based on Anthropic's config): ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN; automatic Anthropic Messages API translation"},
+ {id:"E15",t:"P",u:"https://code.claude.com/docs/en/model-config",c:"Alias remap env vars ANTHROPIC_DEFAULT_OPUS/SONNET/HAIKU_MODEL + CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1 populate /model from the gateway"},
+ {id:"E16",t:"P+S",u:"https://opencode.ai/docs/providers/",c:"OpenCode: open-source terminal agent, 75+ providers, custom baseURL provider in opencode.json, local models supported"},
+ {id:"E17",t:"P",u:"https://api-docs.deepseek.com/quick_start/pricing/",c:"DeepSeek official pricing: $0.15/M input off-peak ($0.30 peak) — the near-free never-stall anchor"},
+ {id:"E18",t:"E",u:"",c:"Empirical: LiteLLM 1.105.1 installed and booted on router/litellm.config.yaml in this workspace, serving groups opus|sonnet|haiku (gate G10)"},
+ {id:"E19",t:"E",u:"",c:"Empirical: real mikoshi-construct install; init materialized 44 files; doctor + soulkill --json executed; 10 discovery marker names verified (gates G02-G05)"}
+];
+const GATES=[
+ {id:"G01",d:"node >= 20 present (mikoshi engines requirement, E1)",s:"PASS"},
+ {id:"G02",d:"mikoshi-construct CLI executes from workspace install (E19)",s:"PASS"},
+ {id:"G03",d:"construct init materialized the baseline (44 files: agents, ladder, policy, harness scripts)",s:"PASS"},
+ {id:"G04",d:"construct doctor executes and reads the baseline back (E19)",s:"PASS"},
+ {id:"G05",d:"construct soulkill --json emits valid machine-readable facts",s:"PASS"},
+ {id:"G06",d:"ladder constant matches docs: low -> low,low,medium,high (E2)",s:"PASS"},
+ {id:"G07",d:"role model pins: implementer=sonnet, harness=inherit, architect=inherit (E4)",s:"PASS"},
+ {id:"G08",d:"litellm proxy installed and importable (E18)",s:"PASS"},
+ {id:"G09",d:"router config YAML parses (groups/fallbacks/strategy shape check)",s:"PASS"},
+ {id:"G10",d:"litellm proxy BOOTS on this config and serves /v1/models with opus|sonnet|haiku (E14)",s:"PASS"},
+ {id:"G11",d:"cascade server boots (SANDBOX) and solves an easy task on the weak tier",s:"PASS"},
+ {id:"G12",d:"hard task escalates weak->mid->strong (FrugalGPT mechanism, E6)",s:"PASS"},
+ {id:"G13",d:"budget guard blocks escalation past budget_usd (E3)",s:"PASS"},
+ {id:"G14",d:"1000-task simulation: all cost/quality assertions hold (synthetic replication E6/E7/E10/E13)",s:"PASS"},
+ {id:"G15",d:"harness configs valid: opencode.json parses; claude-code.env pins alias remaps; AGENTS template has all 10 markers",s:"PASS"},
+ {id:"G16",d:"prompt library validated: P0-P8 headers/sections machine-checked; every cited E# exists in EVIDENCE.md",s:"PASS"},
+ {id:"G17",d:"PLAYBOOK references all 9 prompts + the seven truth rules + the gate loop",s:"PASS"},
+ {id:"G18",d:"this UI: inline app script extracted, passes node --check; required views + data constants present",s:"PASS"}
+];
+const INDEXES=[
+ {id:"I1",n:"$ per task",d:"cost per completed task",i:"construct cost --json + cascade/ledger.jsonl"},
+ {id:"I2",n:"first-pass rate",d:"share of tasks green on rung 1",i:".construct/runs.jsonl"},
+ {id:"I3",n:"escalation rate",d:"tasks leaving the weak tier",i:"ledger event:attempt counts"},
+ {id:"I4",n:"failover latency",d:"429 -> next provider answering",i:"LiteLLM logs / cooldown_time"},
+ {id:"I5",n:"re-entry tokens",d:"tokens paid per fresh agent entry",i:"session tokens / tasks (E3 method)"},
+ {id:"I6",n:"false-pass rate",d:"mutations the harness missed",i:"construct mutate apply/judge (E1)"},
+ {id:"I7",n:"blocked rate",d:"bad-brief stops per 100 tasks",i:"runs.jsonl status:blocked (E2/E3)"},
+ {id:"I8",n:"daily throughput",d:"tasks/day under pooled quotas",i:"sum of provider RPD (E11-E13)"},
+ {id:"I9",n:"escaped-defect cost",d:"rework after a wrong result reached a human",i:"harness findings + CI"}
+];
+const PROMPTS=[
+ {id:"P0",n:"Research & Decompose",w:"any NEW problem -> gated build (the R&D input prompt)"},
+ {id:"P1",n:"Stack Setup",w:"day 0 on a machine + monthly quota/ID re-verification"},
+ {id:"P2",n:"Discovery",w:"fill the 10 memory markers once per repo (kills re-entry cost)"},
+ {id:"P3",n:"Plan",w:"feature -> 2-6 tasks with red-witnessable criteria + effort classes"},
+ {id:"P4",n:"Implement Brief",w:"the only input an implementer gets"},
+ {id:"P5",n:"Harness Verdict",w:"verification that cannot be gamed by the doer"},
+ {id:"P6",n:"Debate / Cross-check",w:"sequence of free agents where no mechanical verifier exists"},
+ {id:"P7",n:"Architect Escalation",w:"design-only, bought by evidence of failure"},
+ {id:"P8",n:"Retro & Tune",w:"weekly: indexes -> ONE knob -> prediction + falsifier -> re-run gates"}
+];
+const TRUTH_RULES=[
+ "1 · No result without a gate — 'done' = run-gates.sh exit 0.",
+ "2 · No claim without an E# — the validator fails the build on orphan citations.",
+ "3 · The verifier is never the doer — implementer reports, harness decides.",
+ "4 · Red before green — an unwitnessed criterion was never a criterion.",
+ "5 · Test the test — construct mutate; while I6>0 nothing else is trustworthy.",
+ "6 · Synthetic is labeled synthetic — simulations prove mechanism, not vendors.",
+ "7 · Open questions are deliverables — a blocked+question beats a 4.16M-token guess."
+];
+
+/* ---------- FREECC engine subtree (from ISSUE-TREE.md; reused by the generator) ---------- */
+function N(id,col,t,d,o){ return Object.assign({id:id,col:col,t:t,d:d,ev:[],g:[],ix:[],p:"P0",w:5,st:"open",vars:"",roles:"",oq:null,sim:false},o||{}); }
+const ENGINE_NODES=[
+ N("L1",2,"FREECC toolset: Max-class performance, free & scalable","Five proven substitutes for Max: cascade+ladder (reasoning), quota pooling (limits), externalized memory (context), separated verification (reliability), one role model across harnesses (coherence).",{ev:["E6","E7","E8","E9","E10","E14"],g:["G10","G14","G15","G16","G17"],ix:["I1","I2","I8"],p:"P0",w:9,vars:"free-tier IDs, quotas, tier prices, difficulty mix",roles:"operator, architect, implementer, harness"}),
+ N("C1",1,"ROUTING — which model answers this call","Quota failover + quality cascade + role pre-routing + optional debate. Config: router/litellm.config.yaml (groups opus|sonnet|haiku).",{ev:["E6","E7","E11","E12","E13","E14"],g:["G09","G10","G12","G13","G14"],ix:["I3","I4","I8"],p:"P1",w:8,st:"resolved",vars:"RPM/TPM/RPD caps, cooldowns, fallback order",roles:"router (auto), operator (refresh), harness (rejects weak answers)"}),
+ N("I1.1",0,"quota failover","LiteLLM usage-based-routing-v2 + fallbacks + cooldown: one provider's 429 never stops the fleet.",{ev:["E11","E12","E13","E14"],g:["G09","G10"],p:"P1",w:7,st:"resolved"}),
+ N("I1.2",0,"quality-gated cascade","FrugalGPT escalation: $0 tiers first; verifier decides; budget_usd hard-stop. cascade/server.mjs.",{ev:["E6","E7"],g:["G11","G12","G13","G14"],p:"P8",w:8,st:"resolved"}),
+ N("I1.3",0,"role pre-routing","Alias contract opus/sonnet/haiku; Claude Code remaps via ANTHROPIC_DEFAULT_*_MODEL onto mikoshi role pins.",{ev:["E4","E14","E15"],g:["G07","G15"],p:"P1",w:7,st:"resolved"}),
+ N("I1.4",0,"debate sampling","Majority-of-3 at mid tier before paying strong — only where no mechanical verifier exists.",{ev:["E10"],g:["G14"],p:"P6",w:5,st:"resolved"}),
+ N("C2",1,"HARNESS — where the human talks to the fleet","Claude Code via router (official wiring) or OpenCode (fully free OSS) or any OpenAI client on the cascade server.",{ev:["E14","E15","E16"],g:["G10","G15"],ix:["I5"],p:"P1",w:7,st:"resolved",roles:"operator (human), netrunner (agent)"}),
+ N("I2.1",0,"Claude Code wiring","harness/run-claude-code.sh: ANTHROPIC_BASE_URL -> :4000, alias remap, gateway model discovery.",{ev:["E14","E15"],g:["G15"],p:"P1",w:6,st:"resolved"}),
+ N("I2.2",0,"OpenCode wiring","opencode.json custom provider freecc -> :4000/v1; model freecc/sonnet; small_model freecc/haiku.",{ev:["E16"],g:["G15"],p:"P1",w:6,st:"resolved"}),
+ N("I2.3",0,"direct API","cascade/server.mjs exposes OpenAI-compatible /v1/chat/completions with ledger + budget headers.",{ev:["E6"],g:["G11"],p:"P1",w:5,st:"resolved"}),
+ N("C3",1,"CONSTRUCT — workflow that makes weak models safe","mikoshi-construct: policy + contract + harness + roles + ladder. Lineage AI-DLC (E5).",{ev:["E1","E2","E3","E5"],g:["G02","G03","G04","G05","G06","G07"],ix:["I2","I6","I7"],p:"P2",w:9,vars:"preset, effort class, brief quality",roles:"architect, implementer, harness, operator"}),
+ N("I3.1",0,"init / attach","construct init materialized 44 files in sandbox; attach jack-in for foreign repos.",{ev:["E1","E19"],g:["G03"],p:"P1",w:7,st:"resolved"}),
+ N("I3.2",0,"discovery protocol","/construct-discover fills 10 markers; doctor checks them mechanically.",{ev:["E1","E19"],g:["G04","G05"],p:"P2",w:8,st:"resolved"}),
+ N("I3.3",0,"reasoning-budget ladder","low->low->medium->high; rungs bought only by red verdicts; runs logged to .construct/runs.jsonl.",{ev:["E2","E3"],g:["G06"],p:"P4",w:9,st:"resolved"}),
+ N("I3.4",0,"mutation check (test the test)","construct mutate injects a named wrong implementation; harness must catch it -> index I6.",{ev:["E1"],g:[],p:"P8",w:7,st:"open",oq:"operator-run gate pending: schedule `construct mutate` weekly"}),
+ N("C4",1,"CONTEXT/MEMORY — free substitute for a huge window","Lost in the Middle says windows are U-shaped; the fix is small verified memory read first.",{ev:["E3","E9"],g:["G15"],ix:["I5"],p:"P2",w:7}),
+ N("I4.1",0,"AGENTS.md 10 markers","Template carries all ten marker names verified against real doctor output.",{ev:["E9","E19"],g:["G15"],p:"P2",w:7,st:"resolved"}),
+ N("I4.2",0,"window discipline","Write findings out at ~50% window; pointers over payloads; never rely on the model remembering.",{ev:["E9"],g:[],p:"P2",w:5,st:"resolved"}),
+ N("I4.3",0,"atlas / repo map","construct atlas renders one self-contained HTML map of stages, parts and code.",{ev:["E1"],g:[],p:"P2",w:4,st:"open",oq:"operator-run: execute `construct atlas` on the live repo"}),
+ N("C5",1,"ECONOMY — the budget is divided in a smart way","Three levels: per-call (cascade budget), per-task (ladder class), per-day (quota pool). Ledgers everywhere.",{ev:["E3","E11","E12","E13","E17"],g:["G09","G13","G14"],ix:["I1","I8"],p:"P8",w:8,st:"resolved",roles:"operator sets budget; ledger records; cascade enforces"}),
+ N("I5.1",0,"pool sizing from observed quotas","rpm/tpm caps set to dashboard-observed values (P1 step 3b), not hopes; midnight-PT reset calendar.",{ev:["E11","E12","E13"],g:["G09","G10"],p:"P1",w:6,st:"resolved"}),
+ N("I5.2",0,"ledgers & observability","cascade/ledger.jsonl + .construct/runs.jsonl + construct cost --json price every rung.",{ev:["E1","E2"],g:["G11","G12","G13"],p:"P8",w:6,st:"resolved"}),
+ N("I5.3",0,"graceful degradation policy","Whole provider down -> fallback chains; sim S2/S3 held >=0.99 accuracy ratio under caps.",{ev:["E11","E13"],g:["G14"],p:"P8",w:6,st:"resolved"}),
+ N("I5.4",0,"three-level budget split","per-call budget_usd (G13) · per-task effort class (G06) · per-day pool (G09/G10).",{ev:["E2","E3"],g:["G06","G13"],p:"P3",w:7,st:"resolved"})
+];
+const ENGINE_EDGES=[
+ ["I1.1","C1"],["I1.2","C1"],["I1.3","C1"],["I1.4","C1"],
+ ["I2.1","C2"],["I2.2","C2"],["I2.3","C2"],
+ ["I3.1","C3"],["I3.2","C3"],["I3.3","C3"],["I3.4","C3"],
+ ["I4.1","C4"],["I4.2","C4"],["I4.3","C4"],
+ ["I5.1","C5"],["I5.2","C5"],["I5.3","C5"],["I5.4","C5"],
+ ["I3.2","I4.1"],["I1.1","I5.1"],["I3.3","I5.4"],["I5.2","I5.3"],
+ ["C1","L1"],["C2","L1"],["C3","L1"],["C4","L1"],["C5","L1"],["C1","I2.1"],["C1","I2.2"],["C1","I2.3"]
+];
+function baselineProject(){
+  const nodes=[
+   N("L0",4,"Company expansion -> qualified leads -> paid bookings (D = OQ-1)","Root output. Destinations referenced as 'provided' but not supplied -> parameterized (OQ-1). Binding constraint: production-engine throughput at $0 marginal cost.",{w:10,p:"P0",ix:["I9"],oq:"OQ-1: destination set D not provided"}),
+   N("L0.1",3,"Expand reachable inventory per destination","Pages/flows per destination produced by the ladder: /plan -> /implement, harness-verified.",{ev:["E2","E3"],p:"P3",w:7,ix:["I2"]}),
+   N("L0.2",3,"Qualify leads","Scoring/enrichment/routing pipelines built+maintained under harness verification.",{ev:["E2"],p:"P3",w:7,ix:["I9"]}),
+   N("L0.3",3,"Convert to paid bookings","Funnels + payment integration; money-path = AGENTS.md high-effort-area -> ladder starts high.",{ev:["E2","E3"],p:"P3",w:9,ix:["I9","I1"]}),
+   N("L0.4",3,"Hold unit cost ~ $0 while scaling","Quota pooling + cascade + budget ledger keep marginal model cost at zero for routine work.",{ev:["E11","E13","E17"],p:"P8",w:8,ix:["I1","I8"]})
+  ].concat(ENGINE_NODES.map(n=>Object.assign({},n)));
+  const edges=ENGINE_EDGES.concat([
+   ["L1","L0.1"],["L1","L0.2"],["L1","L0.3"],["L1","L0.4"],
+   ["C5","L0.4"],
+   ["L0.1","L0"],["L0.2","L0"],["L0.3","L0"],["L0.4","L0"]
+  ]);
+  return {name:"FREECC baseline (ISSUE-TREE.md)",seed:"freecc-baseline",nodes:nodes,edges:edges};
+}
+
+/* ---------- deterministic generator: P0 methodology encoded ---------- */
+const LEX=[
+ {k:"bookings",title:"Payments & Booking Conversion",kw:["book","pay","checkout","reserve","purchase","invoice","order","price"],
+  l0:"Paid bookings convert (money-path)",
+  subs:[
+   {id:"CB.1",t:"Contract-first payment integration",d:"contracts/api/openapi.yaml changes BEFORE code; types generated; breaking changes flagged in CI (E4 implementer rule, E1 contract tooling).",ev:["E1","E4"],p:"P4",w:9},
+   {id:"CB.2",t:"Money-path = high effort class",d:"Every task touching money starts at ladder class high; architect designs before any code (E2, E3 pricing of classes).",ev:["E2","E3"],p:"P3",w:8},
+   {id:"CB.3",t:"Funnel witnesses red/green",d:"Each funnel step gets an executable check witnessed failing before and passing after (E2). No unwitnessable criteria (P3).",ev:["E2"],p:"P5",w:8},
+   {id:"CB.4",t:"PCI / SCA compliance scope",d:"Card-data scope, 3-D Secure, refunds. NO ledger entry exists yet.",ev:[],p:"P0",w:7,oq:"OQ-auto: run P0 step 1-2 — verify provider docs, add ledger entry, define gate BEFORE build"}]},
+ {k:"leads",title:"Lead Capture & Qualification",kw:["lead","qualif","crm","contact","signup","form","prospect"],
+  l0:"Qualified leads flow",
+  subs:[
+   {id:"LB.1",t:"Capture forms + validation harness",d:"Forms as contracts; validation rules tested red-before/green-after (E2).",ev:["E2"],p:"P4",w:7},
+   {id:"LB.2",t:"Lead scoring via cascade (cheap-first)",d:"Score with the $0 tier; escalate only when the verifier rejects — FrugalGPT shape (E6, E7).",ev:["E6","E7"],p:"P8",w:7},
+   {id:"LB.3",t:"CRM routing rules under contract",d:"Routing table versioned in the repo; lint enforces the dependency policy (E1).",ev:["E1"],p:"P4",w:6}]},
+ {k:"content",title:"Destination Content & SEO Inventory",kw:["destination","travel","tour","trip","hotel","flight","seo","content","page","blog","landing","copy"],
+  l0:"Inventory of destination pages expands",
+  subs:[
+   {id:"NB.1",t:"Page factory on the ladder",d:"One template task per destination at class low; harness gates every page; class rises only on red (E2, E3).",ev:["E2","E3"],p:"P3",w:8},
+   {id:"NB.2",t:"Per-destination memory markers",d:"Destination facts live in AGENTS.md-style markers, cited to sources — not in context (E9); kills re-entry cost (E3).",ev:["E9","E3"],p:"P2",w:7},
+   {id:"NB.3",t:"Factual-claim verifier (no invented facts)",d:"Every published claim must cite a source file/URL; NO executable checker built yet.",ev:[],p:"P0",w:8,oq:"OQ-auto: define the claim-check gate (P0 step 6) before publishing anything"}]},
+ {k:"acquisition",title:"Acquisition & Campaigns",kw:["traffic","ads","campaign","social","email","outreach","channel","newsletter"],
+  l0:"Traffic & outreach produce qualified demand",
+  subs:[
+   {id:"AB.1",t:"Campaign copy via debate cross-check",d:"Copy has no mechanical verifier -> P6 debate (3 solvers + judge) is the sanctioned checker (E10).",ev:["E10"],p:"P6",w:6},
+   {id:"AB.2",t:"Channel quota calendar",d:"Send schedules aligned to provider quota resets (midnight PT, E11; 50/day OpenRouter-class limits, E13).",ev:["E11","E13"],p:"P8",w:6},
+   {id:"AB.3",t:"Landing A/B under harness",d:"Variant tasks are ladder tasks; the metric assertion is the witnessed criterion (E2).",ev:["E2"],p:"P5",w:6}]},
+ {k:"analytics",title:"Analytics & Index Instrumentation",kw:["analytic","metric","report","dashboard","kpi","measure","track"],
+  l0:"Decisions run on measured indexes",
+  subs:[
+   {id:"AN.1",t:"Instrument I1-I9",d:"Wire runs.jsonl + ledger.jsonl + construct cost into the index register (E1, E2).",ev:["E1","E2"],p:"P8",w:7},
+   {id:"AN.2",t:"Weekly one-knob retro",d:"P8 loop: indexes -> one change -> prediction + falsifier -> re-run all gates (E3 economy).",ev:["E3"],p:"P8",w:7}]},
+ {k:"compliance",title:"Compliance & Security Invariants",kw:["complian","gdpr","legal","pci","kyc","security","privacy","consent"],
+  l0:"Compliance holds under automation",
+  subs:[
+   {id:"CP.1",t:"Invariants table with named checks",d:"Invariant | Enforced by — every row names the check that enforces it (E1 principle 3).",ev:["E1"],p:"P2",w:7},
+   {id:"CP.2",t:"Secret scanning in CI",d:"gitleaks over history on every push/PR — materialized by construct init and verified in sandbox (E1, E19).",ev:["E1","E19"],p:"P1",w:6}]}
+];
+const GENERIC_SUBS=[
+ {id:"GN.1",t:"Run P0: verify-existence + ledger",d:"Confirm every named tool against its primary registry; open EVIDENCE entries before design (scaffold-first, E8).",ev:["E8"],p:"P0",w:8},
+ {id:"GN.2",t:"Plan into witnessed tasks",d:"P3: 2-6 tasks, red-witnessable criteria, effort classes priced by E3 token data.",ev:["E2","E3"],p:"P3",w:7},
+ {id:"GN.3",t:"Build-verify loop",d:"P4 brief -> P5 verdict; verifier never the doer (E2, E8).",ev:["E2","E8"],p:"P4",w:8},
+ {id:"GN.4",t:"Tune from indexes",d:"P8: one knob, prediction, falsifier, gates from the beginning (E1, E3).",ev:["E1","E3"],p:"P8",w:6}
+];
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function detectDomains(text){
+  const t=text.toLowerCase(); const out=[];
+  for(const d of LEX){ if(d.kw.some(k=>t.indexOf(k)>=0)) out.push(d); }
+  return out;
+}
+function generateProject(desc,inputs,domainKeys){
+  const seed=hash(desc+"|"+inputs);
+  const rng=mulberry(seed);
+  const doms=LEX.filter(d=>domainKeys.indexOf(d.k)>=0);
+  const activeDoms=doms.length?doms:[{k:"generic",title:"Delivery Pipeline (generic)",l0:"Described output is produced and maintained",subs:GENERIC_SUBS}];
+  const nodes=[
+   N("L0",0,truncate(desc,72)||"Desired output",desc,{w:10,p:"P0",ix:["I9"],oq:/destination/i.test(desc)?"OQ-1: destination set D still parameterized — provide the list":"OQ-auto: define the executable check for the L0 business metric (P0 step 6) — an outcome without an instrument is a wish"}),
+  ];
+  const edges=[];
+  const eng=ENGINE_NODES.map(n=>Object.assign({},n));
+  nodes.push.apply(nodes,eng);
+  edges.push.apply(edges,ENGINE_EDGES.map(e=>[e[0],e[1]]));
+  activeDoms.forEach((dm,di)=>{
+    const l0id="L0."+(di+1);
+    nodes.push(N(l0id,0,dm.l0,"Outcome child for domain '"+dm.title+"'. Produced by the engine (L1) through component "+dm.k.toUpperCase()+".",{ev:["E2","E3"],sim:true,w:6+Math.floor(rng()*3),p:"P3",ix:["I2"]}));
+    edges.push(["L1",l0id]);
+    edges.push([l0id,"L0"]);
+    const cid=dm.k.slice(0,2).toUpperCase()+"X";
+    nodes.push(N(cid+"-C",0,dm.title,"Domain component. Depends on the FREECC engine (L1); its sub-issues are the build plan for this domain.",{ev:["E2","E8"],sim:true,w:6,p:"P3",vars:"domain data, destination set, provider accounts",roles:"operator, implementer, harness"}));
+    edges.push(["L1",cid+"-C"]);
+    edges.push([cid+"-C",l0id]);
+    dm.subs.forEach(s=>{
+      nodes.push(N(s.id,0,s.t,s.d,{ev:s.ev,p:s.p,w:s.w,oq:s.oq||null,sim:!s.oq&&s.ev.length>0,ix:[INDEXES[Math.floor(rng()*INDEXES.length)].id]}));
+      edges.push([s.id,cid+"-C"]);
+    });
+  });
+  // budget/deadline become explicit L1-adjacent economy notes
+  return {name:"Generated: "+truncate(desc,40),seed:"gen-"+seed,nodes:nodes,edges:edges};
+}
+function truncate(s,n){ s=(s||"").replace(/\s+/g," ").trim(); return s.length>n?s.slice(0,n-1)+"…":s; }
+
+/* ---------- derived graph math ---------- */
+let PROJECT=null, byId={}, PRIO={}, SEL=null, CRIT=null, VIEW=null, elemRefs={node:{},edge:[]};
+function loadProject(p){
+  PROJECT=p; byId={}; p.nodes.forEach(n=>byId[n.id]=n);
+  computeCols(); computePriority(); layoutProject();
+  CRIT=null;
+  renderAll();
+}
+function prereqs(id){ return PROJECT.edges.filter(e=>e[1]===id).map(e=>e[0]); }
+function dependents(id){ return PROJECT.edges.filter(e=>e[0]===id).map(e=>e[1]); }
+function transitiveDependents(id){
+  const seen=new Set(); const st=[id];
+  while(st.length){ const c=st.pop(); for(const d of dependents(c)) if(!seen.has(d)&&d!==id){seen.add(d);st.push(d);} }
+  return seen;
+}
+function computeCols(){
+  // col = 1 + max(col of prereqs); memoized, cycle-safe
+  const memo={};
+  function col(id,stack){
+    if(memo[id]!==undefined) return memo[id];
+    if(stack.indexOf(id)>=0) return 0;
+    stack.push(id);
+    const ps=prereqs(id);
+    const c=ps.length?1+Math.max.apply(null,ps.map(p=>col(p,stack))):0;
+    stack.pop(); memo[id]=c; return c;
+  }
+  PROJECT.nodes.forEach(n=>{ n.col=col(n.id,[]); });
+  PROJECT.maxCol=Math.max.apply(null,PROJECT.nodes.map(n=>n.col));
+}
+function computePriority(){
+  PRIO={}; let mx=1;
+  for(const n of PROJECT.nodes){
+    const td=transitiveDependents(n.id);
+    let s=n.w*5; td.forEach(id=>{ s+=(byId[id]?byId[id].w:1); });
+    PRIO[n.id]=s; if(s>mx)mx=s;
+  }
+  PROJECT.maxPrio=mx;
+}
+function childrenOf(id){ return prereqs(id).map(x=>byId[x]).filter(Boolean).sort((a,b)=>PRIO[b.id]-PRIO[a.id]); }
+function isActionable(n){ return prereqs(n.id).every(p=>byId[p]&&byId[p].st==="resolved"); }
+function effStatus(n){ return n.st==="resolved"?"resolved":(n.st==="working"?"working":(isActionable(n)?"open":"locked")); }
+
+/* ---------- layout: hierarchical force (deterministic, seeded) ---------- */
+function layoutProject(){
+  const rng=mulberry(hash(PROJECT.seed));
+  const COLW=300,PADX=140,H=1000;
+  const byCol={};
+  PROJECT.nodes.forEach(n=>{ (byCol[n.col]=byCol[n.col]||[]).push(n); });
+  Object.keys(byCol).forEach(c=>{
+    const list=byCol[c];
+    list.forEach((n,i)=>{ n.x=PADX+(+c)*COLW+(rng()*30-15); n.y=70+(i+0.5)*(H-140)/list.length+(rng()*40-20); });
+  });
+  for(let it=0;it<260;it++){
+    for(let i=0;i<PROJECT.nodes.length;i++){
+      const a=PROJECT.nodes[i];
+      for(let j=i+1;j<PROJECT.nodes.length;j++){
+        const b=PROJECT.nodes[j];
+        let dx=a.x-b.x, dy=a.y-b.y; let d2=dx*dx+dy*dy; if(d2<1) {d2=1; dy=(rng()-.5)*2;}
+        if(d2<140*140){ const d=Math.sqrt(d2); const f=(140-d)/d*0.16; a.x+=dx*f*0.2; a.y+=dy*f; b.x-=dx*f*0.2; b.y-=dy*f; }
+      }
+      const tx=PADX+a.col*COLW; a.x+=(tx-a.x)*0.25;
+    }
+    PROJECT.edges.forEach(e=>{
+      const a=byId[e[0]],b=byId[e[1]]; if(!a||!b)return;
+      const dy=(b.y-a.y)*0.012; a.y+=dy; b.y-=dy;
+    });
+    PROJECT.nodes.forEach(n=>{ n.y=Math.max(40,Math.min(H-40,n.y)); });
+  }
+  VIEW={x:0,y:0,w:PADX*2+PROJECT.maxCol*COLW+120,h:H};
+}
+
+/* ---------- SVG rendering ---------- */
+const svgNS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){ const e=document.createElementNS(svgNS,tag); for(const k in attrs)e.setAttribute(k,attrs[k]); if(parent)parent.appendChild(e); return e; }
+const STCOL={resolved:"#4ade80",open:"#f5a623",locked:"#5b6a82",working:"#60a5fa"};
+function renderCloud(){
+  const svg=document.getElementById("cloud");
+  svg.innerHTML="";
+  const defs=el("defs",{},svg);
+  ["#5b6a82","#4ade80","#39d2c0","#a78bfa"].forEach((c,i)=>{
+    const m=el("marker",{id:"ar"+i,markerWidth:8,markerHeight:8,refX:7,refY:4,orient:"auto"},defs);
+    el("path",{d:"M0,0 L8,4 L0,8 z",fill:c},m);
+  });
+  const gEdges=el("g",{},svg), gNodes=el("g",{},svg);
+  elemRefs={node:{},edge:[]};
+  PROJECT.edges.forEach(e=>{
+    const a=byId[e[0]],b=byId[e[1]]; if(!a||!b)return;
+    const ok=a.st==="resolved";
+    const path=el("path",{class:"edge",stroke:ok?"#2f6e52":"#2a3548","marker-end":"url(#"+(ok?1:0)+")"},gEdges);
+    elemRefs.edge.push({path:path,a:a,b:b});
+  });
+  PROJECT.nodes.forEach(n=>{
+    const g=el("g",{class:"node",transform:"translate("+n.x+","+n.y+")"},gNodes);
+    const r=9+15*Math.sqrt(PRIO[n.id]/PROJECT.maxPrio);
+    n.r=r;
+    const st=effStatus(n);
+    const gap=(!n.ev.length)||n.oq;
+    el("circle",{r:r,fill:"#0b0e14",stroke:STCOL[st],"stroke-width":n.id===SEL?3.5:2,opacity:st==="locked"?0.55:1},g);
+    el("circle",{r:r-4,fill:STCOL[st],opacity:st==="locked"?0.25:0.85},g);
+    if(gap){ el("circle",{r:r+4,fill:"none",stroke:"#f87171","stroke-width":1,"stroke-dasharray":"3 3",opacity:.9},g); }
+    if(n.g&&n.g.length){ el("circle",{r:3,cx:r*0.75,cy:-r*0.75,fill:"#39d2c0"},g); }
+    const t1=el("text",{class:"nid",y:r+14,"text-anchor":"middle"},g); t1.textContent=n.id;
+    const t2=el("text",{y:r+27,"text-anchor":"middle",fill:"#8494ab","font-size":"10"},g); t2.textContent=truncate(n.t,26);
+    g.addEventListener("pointerdown",ev=>startDragNode(ev,n));
+    g.addEventListener("click",ev=>{ ev.stopPropagation(); selectNode(n.id); });
+    elemRefs.node[n.id]=g;
+  });
+  positionEdges();
+  applyView();
+}
+function positionEdges(){
+  elemRefs.edge.forEach(rec=>{
+    const a=rec.a,b=rec.b;
+    const dx=Math.max(40,(b.x-a.x)/2);
+    const rr=(b.r||12)+4;
+    rec.path.setAttribute("d","M"+a.x+","+a.y+" C"+(a.x+dx)+","+a.y+" "+(b.x-dx)+","+b.y+" "+(b.x-(b.x>a.x?rr:-rr))+","+b.y);
+  });
+}
+function applyView(){
+  const svg=document.getElementById("cloud");
+  svg.setAttribute("viewBox",VIEW.x+" "+VIEW.y+" "+VIEW.w+" "+VIEW.h);
+}
+function svgPoint(evt){
+  const svg=document.getElementById("cloud");
+  const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+let drag=null,pan=null;
+function startDragNode(evt,n){
+  evt.preventDefault(); evt.stopPropagation();
+  const p=svgPoint(evt); drag={n:n,ox:n.x-p.x,oy:n.y-p.y};
+}
+document.addEventListener("pointermove",evt=>{
+  if(drag){ const p=svgPoint(evt); drag.n.x=p.x+drag.ox; drag.n.y=p.y+drag.oy;
+    elemRefs.node[drag.n.id].setAttribute("transform","translate("+drag.n.x+","+drag.n.y+")"); positionEdges(); }
+  else if(pan){ const p=svgPoint(evt); VIEW.x=pan.vx-(p.x-pan.sx); VIEW.y=pan.vy-(p.y-pan.sy); applyView(); }
+});
+document.addEventListener("pointerup",()=>{ drag=null; pan=null; });
+(function(){
+  const svg=document.getElementById("cloud");
+  svg.addEventListener("pointerdown",evt=>{ if(evt.target===svg||evt.target.tagName==="path"&&evt.target.classList.contains("edge")){ const p=svgPoint(evt); pan={sx:p.x,sy:p.y,vx:VIEW.x,vy:VIEW.y}; } });
+  svg.addEventListener("wheel",evt=>{
+    evt.preventDefault();
+    const f=evt.deltaY>0?1.12:0.89;
+    const p=svgPoint(evt);
+    const nw=Math.max(400,Math.min(6000,VIEW.w*f));
+    const k=nw/VIEW.w;
+    VIEW.x=p.x-(p.x-VIEW.x)*k; VIEW.y=p.y-(p.y-VIEW.y)*k;
+    VIEW.w=nw; VIEW.h=VIEW.h*k;
+    applyView();
+  },{passive:false});
+  svg.addEventListener("click",()=>{ SEL=null; renderCloud(); renderPanel(); });
+})();
+
+/* ---------- selection, panel, critical chain ---------- */
+function criticalChain(id){
+  const path=[id]; let cur=id;
+  for(let guard=0;guard<20;guard++){
+    const ds=dependents(cur).map(d=>byId[d]).filter(Boolean).sort((a,b)=>PRIO[b.id]-PRIO[a.id]);
+    if(!ds.length)break; cur=ds[0].id; path.push(cur);
+  }
+  return path;
+}
+function selectNode(id){
+  SEL=id;
+  renderCloud();
+  if(CRIT){ highlightCritical(); }
+  renderPanel();
+}
+function highlightCritical(){
+  const set=new Set(CRIT);
+  PROJECT.nodes.forEach(n=>{ const g=elemRefs.node[n.id]; if(g)g.style.opacity=set.has(n.id)?1:0.18; });
+  elemRefs.edge.forEach(r=>{ r.path.style.opacity=(set.has(r.a.id)&&set.has(r.b.id))?1:0.07; if(set.has(r.a.id)&&set.has(r.b.id))r.path.setAttribute("stroke","#a78bfa"); });
+}
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function renderPanel(){
+  const side=document.getElementById("side");
+  if(!SEL){ side.innerHTML=panelHome(); return; }
+  const n=byId[SEL]; if(!n){SEL=null;side.innerHTML=panelHome();return;}
+  const st=effStatus(n);
+  const badge={resolved:'<span class="badge b-res">RESOLVED</span>',open:'<span class="badge b-open">OPEN · actionable</span>',locked:'<span class="badge b-lock">LOCKED</span>',working:'<span class="badge b-work">WORKING</span>'}[st];
+  const gap=(!n.ev.length)||n.oq;
+  const kids=childrenOf(n.id);
+  const deps=dependents(n.id);
+  const pr=prereqs(n.id);
+  const prioPct=Math.round(100*PRIO[n.id]/PROJECT.maxPrio);
+  let html='<h2><span class="mono">'+esc(n.id)+'</span> '+esc(n.t)+'</h2>';
+  html+='<div class="row" style="margin:6px 0">'+badge+(gap?'<span class="badge b-gap">EVIDENCE GAP</span>':'')+(n.sim&&n.st!=="resolved"?'<span class="badge b-sim">sim-gate available</span>':'')+'</div>';
+  html+='<div class="kv"><b>Why it matters (resolution priority)</b><div class="small muted">'+prioPct+'% of max unlock power — resolving it frees '+transitiveDependents(n.id).size+' downstream issue(s)</div><div class="bar"><i style="width:'+prioPct+'%"></i></div></div>';
+  html+='<div class="kv"><b>Statement</b><p>'+esc(n.d)+'</p></div>';
+  if(n.vars)html+='<div class="kv"><b>Variables</b><p class="small">'+esc(n.vars)+'</p></div>';
+  if(n.roles)html+='<div class="kv"><b>Roles</b><p class="small">'+esc(n.roles)+'</p></div>';
+  if(n.ev&&n.ev.length)html+='<div class="kv"><b>Methods → evidence</b><div>'+n.ev.map(e=>'<span class="pill" onclick="showEvidence(\''+e+'\')">'+e+'</span>').join("")+'</div></div>';
+  if(n.g&&n.g.length)html+='<div class="kv"><b>Mechanical gates</b><div>'+n.g.map(g=>{const gg=GATES.find(x=>x.id===g);return '<span class="pill g" onclick="gotoReport(\''+g+'\')">'+g+(gg&&gg.s==="PASS"?" ✓":" ⏳")+'</span>';}).join("")+'</div></div>';
+  if(n.ix&&n.ix.length)html+='<div class="kv"><b>Spectral indexes</b><div>'+n.ix.map(i=>'<span class="pill i" onclick="gotoTab(\'indexes\')">'+i+'</span>').join("")+'</div></div>';
+  html+='<div class="kv"><b>Recommended prompt</b><div><span class="pill p" onclick="gotoPrompt(\''+n.p+'\')">'+n.p+' · '+esc((PROMPTS.find(p=>p.id===n.p)||{n:""}).n)+'</span></div></div>';
+  if(n.oq)html+='<div class="kv"><b>Open question (honesty ledger)</b><p class="small" style="color:var(--rd)">'+esc(n.oq)+'</p></div>';
+  // dependency chain
+  html+='<div class="kv"><b>Dependency chain</b><p class="small muted">blocked by: '+(pr.length?pr.map(p=>'<span class="pill" onclick="selectNode(\''+p+'\')">'+esc(p)+'</span>').join(""):'<i>nothing — atomic</i>')+'<br>unlocks: '+(deps.length?deps.map(d=>'<span class="pill" onclick="selectNode(\''+d+'\')">'+esc(d)+'</span>').join(""):'<i>terminal output</i>')+'</p></div>';
+  // action buttons
+  html+='<div class="row" style="margin:10px 0">';
+  if(st!=="resolved"){
+    const gateIds=(n.g||[]).filter(g=>{const gg=GATES.find(x=>x.id===g);return gg&&gg.s==="PASS";});
+    if(gateIds.length) html+='<button class="btn" onclick="resolveByGate(\''+n.id+'\')">✓ resolve by gate '+gateIds[0]+'</button>';
+    else if(n.sim) html+='<button class="btn ghost" onclick="runSimGate(\''+n.id+'\')">▶ run SIMULATED gate (labeled)</button>';
+    else html+='<button class="btn dim" disabled title="no green gate and no evidence — see truth rules 1+2">blocked: no gate / evidence</button>';
+  } else html+='<button class="btn dim" onclick="unresolve(\''+n.id+'\')">↺ reopen</button>';
+  html+='<button class="btn dim" onclick="CRIT=criticalChain(\''+n.id+'\');highlightCritical();toast(\'critical chain highlighted: '+esc(criticalChain(n.id).join(' → '))+'\')">⇢ critical chain</button>';
+  html+='</div>';
+  if(st==="locked") html+='<p class="small" style="color:var(--dim)">Locked: resolve '+pr.filter(p=>byId[p].st!=="resolved").map(p=>'<b class="mono">'+esc(p)+'</b>').join(", ")+' first (dependency discipline).</p>';
+  // sub-issues sorted by importance
+  html+='<h3>Sub-issues ('+kids.length+') — sorted by importance of resolving</h3>';
+  if(!kids.length)html+='<p class="small muted">Atomic issue — no decomposition below.</p>';
+  kids.forEach(k=>{
+    const pct=Math.round(100*PRIO[k.id]/PROJECT.maxPrio);
+    const kst=effStatus(k);
+    html+='<button class="sub" onclick="selectNode(\''+k.id+'\')"><span class="t"><span><span class="dot" style="background:'+STCOL[kst]+'"></span><b class="mono">'+esc(k.id)+'</b> · '+esc(truncate(k.t,40))+'</span><span class="small muted">'+pct+'%</span></span><span class="bar"><i style="width:'+pct+'%"></i></span></button>';
+  });
+  side.innerHTML=html;
+}
+function panelHome(){
+  const total=PROJECT.nodes.length;
+  const res=PROJECT.nodes.filter(n=>n.st==="resolved").length;
+  const gaps=PROJECT.nodes.filter(n=>!n.ev.length||n.oq).length;
+  return '<h2>'+esc(PROJECT.name)+'</h2>'+
+   '<p class="small muted">'+total+' issues · '+res+' resolved · '+gaps+' with evidence gaps · '+PROJECT.edges.length+' dependency edges. Click any node: sub-issues appear below it, sorted by resolution priority (unlock power). Arrows: prerequisite → dependent — resolution flows left → right toward the output.</p>'+
+   '<h3>How to work this tree</h3><p class="small">1 · Start from the highest-priority <i>actionable</i> atomic issue (left column, amber).<br>2 · Open its recommended prompt (P#), fill the context pointers, run it in your harness.<br>3 · Resolve only via its green gate (G#) — or the labeled simulation for generated nodes.<br>4 · Evidence-gap nodes (red dashed ring) must go through P0 steps 1–2 first: verify existence, add a ledger entry, define a gate. The UI refuses to resolve them — truth rules 1+2, enforced in code.<br>5 · When a component turns green, its dependent unlocks; when L1 turns green, the L0.x outcomes become actionable.</p>'+
+   '<h3>Seven rules of truth</h3>'+TRUTH_RULES.map(r=>'<p class="small" style="margin:3px 0">'+esc(r)+'</p>').join("")+
+   '<h3>Budget split</h3><p class="small">per-call: cascade $0-first + hard budget stop (G13) · per-task: ladder class bought by red verdicts (G06) · per-day: quota pool with failover (G09/G10).</p>';
+}
+
+/* ---------- resolution mechanics (truth rules in code) ---------- */
+function resolveByGate(id){
+  const n=byId[id];
+  const ok=(n.g||[]).some(g=>{const gg=GATES.find(x=>x.id===g);return gg&&gg.s==="PASS";});
+  if(!ok){ toast("REFUSED: no green gate for "+id+" (truth rule 1)"); return; }
+  if(!isActionable(n)){ toast("LOCKED: prerequisites of "+id+" are not resolved yet"); return; }
+  n.st="resolved"; afterChange(id);
+}
+function runSimGate(id){
+  const n=byId[id];
+  if(!isActionable(n)){ toast("LOCKED: prerequisites of "+id+" are not resolved yet"); return; }
+  if(!n.ev.length||n.oq){ toast("REFUSED: evidence gap on "+id+" — run P0 steps 1-2 first (truth rule 2)"); return; }
+  toast("SIMULATED gate for "+id+": verify-existence ✓ · ledger refs ✓ · executable check ✓ — labeled synthetic (truth rule 6)");
+  n.st="resolved"; n.simPassed=true; afterChange(id);
+}
+function unresolve(id){ byId[id].st="open"; afterChange(id); }
+function afterChange(id){
+  // resolution can unlock dependents; locked children of reopened nodes revert to open
+  recomputeStatuses(); renderAll(); if(SEL)renderPanel();
+}
+function recomputeStatuses(){ /* statuses are explicit; 'locked' is derived in effStatus() */ }
+
+/* ---------- other tabs ---------- */
+let sortKey="prio",sortDir=-1;
+function renderIssues(){
+  const rows=PROJECT.nodes.slice().sort((a,b)=>{
+    let x,y;
+    if(sortKey==="prio"){x=PRIO[a.id];y=PRIO[b.id];}
+    else if(sortKey==="col"){x=a.col;y=b.col;}
+    else if(sortKey==="st"){x=effStatus(a);y=effStatus(b);}
+    else {x=(a.ev||[]).length;y=(b.ev||[]).length;}
+    return (x<y?-1:x>y?1:0)*sortDir;
+  });
+  let h='<tr><th data-k="prio">priority ▾</th><th data-k="col">layer</th><th>id</th><th>issue</th><th data-k="st">status</th><th data-k="ev">evidence</th><th>gates</th><th>prompt</th></tr>';
+  rows.forEach(n=>{
+    const st=effStatus(n);
+    const pct=Math.round(100*PRIO[n.id]/PROJECT.maxPrio);
+    h+='<tr onclick="gotoTab(\'cloud\');selectNode(\''+n.id+'\')" style="cursor:pointer">'+
+      '<td><div style="display:flex;align-items:center;gap:6px"><b>'+pct+'%</b><div class="bar" style="width:70px"><i style="width:'+pct+'%"></i></div></div></td>'+
+      '<td class="mono small">L'+n.col+'</td><td class="mono"><b>'+esc(n.id)+'</b></td><td>'+esc(truncate(n.t,60))+'</td>'+
+      '<td><span class="dot" style="background:'+STCOL[st]+'"></span>'+st+'</td>'+
+      '<td>'+(n.ev.length?n.ev.join(", "):'<span style="color:var(--rd)">GAP</span>')+'</td>'+
+      '<td class="small">'+(n.g&&n.g.length?n.g.join(", "):"—")+'</td><td class="mono">'+esc(n.p)+'</td></tr>';
+  });
+  const t=document.getElementById("issueTable");
+  t.innerHTML=h;
+  t.querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{const k=th.getAttribute("data-k");if(!k)return;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}renderIssues();}));
+}
+function renderIndexes(){
+  document.getElementById("idxGrid").innerHTML=INDEXES.map(x=>
+   '<div class="card"><h3 style="margin-top:0">'+x.id+' · '+esc(x.n)+'</h3><p class="small">'+esc(x.d)+'</p><p class="small muted">instrument: <span class="mono">'+esc(x.i)+'</span></p><div class="row"><input type="number" placeholder="current value" style="max-width:150px"><span class="small muted">tuning rule: P8 (one knob, falsifier required)</span></div></div>'
+  ).join("");
+}
+function renderEvidence(filterId){
+  let h='<tr><th>id</th><th>type</th><th>claim as used</th><th>source</th></tr>';
+  EVIDENCE.forEach(e=>{
+    if(filterId&&e.id!==filterId)return;
+    h+='<tr id="ev-'+e.id+'"><td class="mono"><b>'+e.id+'</b></td><td>'+e.t+'</td><td>'+esc(e.c)+'</td><td>'+(e.u?'<a href="'+e.u+'" target="_blank" rel="noopener">'+e.u+'</a>':'<span class="muted">workspace-empirical (see REPORT.md)</span>')+'</td></tr>';
+  });
+  document.getElementById("evTable").innerHTML=h;
+}
+function showEvidence(id){ gotoTab("evidence"); renderEvidence(id); toast("Evidence "+id+" — type "+(EVIDENCE.find(e=>e.id===id)||{t:"?"}).t+" (re-verify secondary sources before reliance)"); }
+function renderPrompts(){
+  document.getElementById("promptList").innerHTML=PROMPTS.map(p=>{
+    const tpl=document.getElementById("tpl-"+p.id);
+    const body=tpl?tpl.textContent.trim():"(template missing)";
+    return '<details class="acc" id="pr-'+p.id+'"><summary>'+p.id+' · '+esc(p.n)+' <small>'+esc(p.w)+'</small></summary><div class="row" style="margin:10px 0"><button class="btn ghost" onclick="copyPrompt(\''+p.id+'\')">copy prompt</button><span class="small muted">verbatim from prompts/'+p.id.toLowerCase()+'*.md (gate G16-validated)</span></div><pre class="tp" id="pre-'+p.id+'">'+esc(body)+'</pre></details>';
+  }).join("");
+}
+function copyPrompt(id){
+  const txt=(document.getElementById("tpl-"+id)||{textContent:""}).textContent.trim();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>toast(id+" copied"),()=>fallbackCopy(txt,id)); }
+  else fallbackCopy(txt,id);
+}
+function fallbackCopy(txt,id){
+  const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); toast(id+" copied (fallback)"); }catch(e){ toast("select the text manually — clipboard blocked in sandbox"); }
+  document.body.removeChild(ta);
+}
+function gotoPrompt(id){ gotoTab("prompts"); const d=document.getElementById("pr-"+id); if(d){ d.open=true; d.scrollIntoView({behavior:"smooth"});} }
+function gotoReport(gid){ gotoTab("report"); const r=document.getElementById("gate-"+gid); if(r){ r.scrollIntoView({behavior:"smooth"}); r.style.background="#132a1e"; setTimeout(()=>r.style.background="",1600);} }
+function renderGates(revealed){
+  let h='<tr><th>gate</th><th>check</th><th>status</th></tr>';
+  GATES.forEach((g,i)=>{
+    const shown=revealed===undefined||i<revealed;
+    h+='<tr id="gate-'+g.id+'"><td class="mono"><b>'+g.id+'</b></td><td>'+esc(g.d)+'</td><td>'+(shown?'<span class="'+(g.s==="PASS"?"pass":"fail")+'">'+(g.s)+'</span>':'<span class="muted">…</span>')+'</td></tr>';
+  });
+  document.getElementById("gateTable").innerHTML=h;
+}
+function replayGates(){
+  let i=0; const st=document.getElementById("replayState");
+  const tm=setInterval(()=>{ i++; renderGates(i); st.textContent="running… "+i+"/"+GATES.length;
+    if(i>=GATES.length){ clearInterval(tm); st.textContent="18/18 PASS — replay of the real run 2026-10-17 (authoritative: REPORT.md via gates/run-gates.sh)"; } },140);
+}
+
+/* ---------- footer / chrome ---------- */
+function renderFooter(){
+  const total=PROJECT.nodes.length;
+  const res=PROJECT.nodes.filter(n=>n.st==="resolved").length;
+  const cov=Math.round(100*PROJECT.nodes.filter(n=>n.ev.length>0).length/total);
+  const oq=PROJECT.nodes.filter(n=>n.oq).length;
+  document.getElementById("chipProj").textContent=PROJECT.name;
+  document.getElementById("chipRes").textContent=res+"/"+total;
+  document.getElementById("chipCov").textContent=cov+"%";
+  document.getElementById("footCounts").innerHTML='<b>'+esc(PROJECT.name)+'</b> · '+res+'/'+total+' resolved · evidence coverage '+cov+'% · open questions '+oq+(res===total?' · <span class="pass">TREE GREEN — L0 reachable</span>':'');
+}
+let tick=0;
+setInterval(()=>{ tick=(tick+1)%TRUTH_RULES.length; document.getElementById("ticker").textContent=TRUTH_RULES[tick]; },5200);
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none",4200);
+}
+function renderAll(){ renderCloud(); renderPanel(); renderIssues(); renderFooter(); if(CRIT)highlightCritical(); applySearch(); }
+function gotoTab(name){
+  document.querySelectorAll("section.tab").forEach(s=>s.classList.remove("on"));
+  document.getElementById("tab-"+name).classList.add("on");
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-t")===name));
+  if(name==="cloud"){ renderCloud(); if(CRIT)highlightCritical(); applySearch(); }
+}
+document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>gotoTab(b.getAttribute("data-t"))));
+
+/* search */
+function applySearch(){
+  const q=(document.getElementById("search").value||"").toLowerCase().trim();
+  PROJECT.nodes.forEach(n=>{
+    const g=elemRefs.node[n.id]; if(!g)return;
+    const hit=!q||n.id.toLowerCase().indexOf(q)>=0||n.t.toLowerCase().indexOf(q)>=0;
+    g.style.opacity=hit?1:0.12;
+  });
+}
+document.getElementById("search").addEventListener("input",applySearch);
+document.getElementById("btnFit").addEventListener("click",()=>{ layoutProjectView(); });
+function layoutProjectView(){ const PADX=140,COLW=300; VIEW={x:0,y:0,w:PADX*2+PROJECT.maxCol*COLW+120,h:1000}; applyView(); }
+document.getElementById("btnRelax").addEventListener("click",()=>{ PROJECT.seed=PROJECT.seed+"-r"+Math.floor(Math.random()*999); layoutProject(); renderCloud(); if(CRIT)highlightCritical(); });
+document.getElementById("btnCritical").addEventListener("click",()=>{
+  if(!SEL){ toast("select a node first — the chain walks from it to L0"); return; }
+  CRIT=criticalChain(SEL); highlightCritical(); toast("critical chain: "+CRIT.join(" → "));
+});
+document.getElementById("btnReplay").addEventListener("click",replayGates);
+
+/* ---------- wizard ---------- */
+let wizDomains=[];
+document.getElementById("wizNext").addEventListener("click",()=>{
+  const desc=document.getElementById("inDesc").value.trim();
+  if(!desc){ toast("Describe the desired result first — the tree is rooted in it (P0: desired result first)."); return; }
+  wizDomains=detectDomains(desc);
+  const dl=document.getElementById("domList");
+  if(!wizDomains.length){ dl.innerHTML='<p class="small muted">No known outcome-domain matched — the generator will use the GENERIC delivery pipeline (GN.1–GN.4). Add keywords like bookings, leads, destinations, campaigns, analytics, compliance to detect domains.</p>'; wizDomains=[{k:"generic",title:"Delivery Pipeline (generic)"}]; }
+  else dl.innerHTML=wizDomains.map(d=>'<span class="domchip on" data-k="'+d.k+'">✓ '+esc(d.title)+'</span>').join("");
+  dl.querySelectorAll(".domchip").forEach(c=>c.addEventListener("click",()=>{ c.classList.toggle("on"); c.textContent=(c.classList.contains("on")?"✓ ":"")+c.textContent.replace(/^[✓x]\s*/,""); }));
+  document.getElementById("wiz1").style.display="none";
+  document.getElementById("wiz2").style.display="block";
+  document.getElementById("st1").classList.remove("on"); document.getElementById("st2").classList.add("on");
+});
+document.getElementById("wizBack").addEventListener("click",()=>{
+  document.getElementById("wiz2").style.display="none"; document.getElementById("wiz1").style.display="block";
+  document.getElementById("st2").classList.remove("on"); document.getElementById("st1").classList.add("on");
+});
+document.getElementById("wizGen").addEventListener("click",()=>{
+  const desc=document.getElementById("inDesc").value.trim();
+  const inputs=document.getElementById("inInputs").value.trim();
+  const keys=[].map.call(document.querySelectorAll(".domchip.on"),c=>c.getAttribute("data-k")).filter(k=>k&&k!=="generic");
+  const proj=generateProject(desc,inputs,keys);
+  loadProject(proj);
+  const gaps=proj.nodes.filter(n=>!n.ev.length||n.oq).length;
+  document.getElementById("genSummary").innerHTML='<p>'+proj.nodes.length+' issues · '+proj.edges.length+' dependency edges · engine layers C1–C5 attached (all gate-backed) · <b style="color:var(--rd)">'+gaps+' evidence gap(s)</b> — those nodes are unresolvable until P0 steps 1–2 add ledger entries and gates (truth rule 2, enforced in code).</p><p class="small muted">Deterministic seed: <span class="mono">'+proj.seed+'</span> — the same description always generates the same tree.</p>';
+  document.getElementById("wiz2").style.display="none"; document.getElementById("wiz3").style.display="block";
+  document.getElementById("st2").classList.remove("on"); document.getElementById("st3").classList.add("on");
+});
+document.getElementById("goCloud").addEventListener("click",()=>gotoTab("cloud"));
+document.getElementById("loadBaseline").addEventListener("click",()=>{ loadProject(baselineProject()); gotoTab("cloud"); toast("FREECC baseline loaded — I3.4 (mutate) and I4.3 (atlas) stay open: operator-run gates"); });
+
+/* ---------- boot ---------- */
+renderIndexes(); renderEvidence(); renderPrompts(); renderGates();
+loadProject(baselineProject());
+document.getElementById("ticker").textContent=TRUTH_RULES[0];
+</script>
+</body>
+</html>
