@@ -213,16 +213,33 @@ stack refers to those three names.
 > Tip: if a provider gave you nothing usable, delete its 3–4 line block from the config. An empty
 > group is better than a broken one, as long as each group keeps at least one working model.
 
+> **Measured on a real free account (2026-10-17), so you know what to expect:**
+> Gemini retires models fast — `gemini-2.5-flash` now answers *"no longer available to new
+> users"* (HTTP 404) and **every** pro model returns 429 on a free key. The whole `flash` family
+> works. Groq no longer serves any llama models at all; `openai/gpt-oss-120b` and `gpt-oss-20b`
+> do, in 0.2–0.6s. OpenRouter's `:free` list churns weekly — check it, don't trust the old names.
+
 ---
 
 ## Part 4 — Start the router and prove it
 
-Open **Git Bash** in the project folder.
+On Windows, **PowerShell**:
+
+```powershell
+cd C:\path\to\freecc
+.\router\start.ps1
+```
+
+Or with **Git Bash** (any OS):
 
 ```bash
 cd /c/path/to/freecc
 bash router/start.sh
 ```
+
+> `start.ps1` sets `PYTHONIOENCODING=utf-8` for you. Without it, LiteLLM aborts on
+> Windows with `UnicodeEncodeError: 'charmap' codec can't encode characters` — its
+> startup banner is UTF-8 box art and your console code page isn't.
 
 Expected output ends with something like `Uvicorn running on http://0.0.0.0:4000`.
 
@@ -393,6 +410,11 @@ node cascade/simulate.mjs --n 1000      # strategy simulation, no keys needed
 | `Address already in use` on 4000 | old router still running | close the other window, or `PORT=4001 bash router/start.sh` |
 | Keys work, agent still hits api.anthropic.com | env not sourced | use `harness/run-claude-code.sh`, do not start `claude` directly |
 | PowerShell TLS / certificate errors on `curl` | PowerShell's network stack | use **Git Bash** for `curl` commands |
+| `UnicodeEncodeError: 'charmap' codec` at startup | LiteLLM banner vs a non-UTF-8 console | use `router/start.ps1`, or set `PYTHONIOENCODING=utf-8` before starting |
+| HTTP 200 but **empty** `content` | a tiny free model too weak to answer | delete that model from its group — measured example: `liquid/lfm-2.5-2.6b:free` returned empty 100% of the time |
+| Gemini 404 *"no longer available to new users"* | the model was retired | `gemini-2.5-*` is retired now; use a current `flash` id (Part 3.4) |
+| Gemini 429 on *pro* models | pro tiers are not free | keep `opus` on the strongest **flash** model, or add billing / a near-free DeepSeek key |
+| OpenRouter intermittent 429 | free tier is ~50-100 requests/day and heavily shared | keep OpenRouter out of the tier you care about latency for; let Gemini/Groq carry it |
 
 ---
 

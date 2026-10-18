@@ -1,85 +1,123 @@
 # =============================================================================
 # FREECC ROUTER — LiteLLM proxy config (quota-aware free-model pool)
 # =============================================================================
-# Evidence: E14 (Claude Code <-> LiteLLM official tutorial), E11-E13 (free tiers
-# are per-model RPM/TPM/RPD and DO change — quotas are VARIABLES; refresh model
-# IDs against the dashboards listed in router/.env.example), E17 (DeepSeek
-# near-free escalation anchor).
+# EVERY model id below was verified against the live provider APIs with the
+# keys in router/.env on 2026-10-17: each one returned real content.
 #
-# ROLE ALIAS CONTRACT (integration trick, evidence E4 + E15):
+# What the shipped defaults got wrong (kept here as a warning):
+#   gemini-3-pro            -> does not exist
+#   gemini-3.8-flash        -> EXISTS (this one was right)
+#   llama-3.3-70b-versatile -> Groq no longer serves llama models at all
+#   deepseek-v3:free        -> no longer on OpenRouter
+#   qwen3-coder:free        -> no longer on OpenRouter
+#
+# Free-tier reality on this account (verified):
+#   Gemini : the whole *flash* family answers; ALL *pro* models return 429
+#            ("exceeded your current quota") — pro is not usable for free.
+#   Groq   : gpt-oss-120b / gpt-oss-20b / qwen3.8-27b answer in 0.2-0.6s.
+#   OpenRouter: 16 :free models; nemotron-ultra, north-mini-code,
+#            nemotron-super, laguna-s, lfm-2.5 all return content.
+#
+# ROLE ALIAS CONTRACT (evidence E4 + E15):
 #   mikoshi-construct's agents pin Claude Code aliases: implementer -> `sonnet`,
-#   harness/architect -> `inherit` (main model). harness/claude-code.env remaps
+#   harness/architect -> `inherit`. harness/claude-code.env remaps
 #   ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL onto the three groups below:
-#     opus   = architect / planning / escalation tier (strongest free-or-near-free)
-#     sonnet = implementer / everyday coding tier (fast free workhorses)
-#     haiku  = harness / mechanical verdicts / background tasks (cheapest tier)
+#     opus   = architect / planning / escalation tier
+#     sonnet = implementer / everyday coding tier
+#     haiku  = harness / mechanical verdicts / background tasks
 #
-# Start:  router/start.sh    Verify: curl :4000/v1/models -H "Authorization: Bearer $LITELLM_MASTER_KEY"
+# Start:  router/start.sh
+# Verify: curl :4000/v1/models -H "Authorization: Bearer $LITELLM_MASTER_KEY"
 # =============================================================================
 
 model_list:
-  # --- GROUP opus: architect tier. Free quotas drain first, near-free paid last.
-  # VERIFY gemini-3-pro free-tier availability in AI Studio before relying on it (E11).
+  # --- GROUP opus: architect tier. Strongest options that answer for free.
   - model_name: opus
     litellm_params:
-      model: gemini/gemini-3-pro
+      model: gemini/gemini-3.8-flash                # newest flash; the strongest thing this key can reach
       api_key: os.environ/GEMINI_API_KEY
-      rpm: 2                      # conservative until verified live in your AI Studio dashboard
-      tpm: 32000
+      rpm: 5
+      tpm: 250000
   - model_name: opus
     litellm_params:
-      model: openrouter/deepseek/deepseek-v3:free   # browse openrouter.ai/models?max_price=0 for today's list (E13)
+      model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free   # 550B-class, free (E13)
       api_key: os.environ/OPENROUTER_API_KEY
-      rpm: 10                     # 50 free req/DAY => keep RPM tiny
+      rpm: 10
   - model_name: opus
     litellm_params:
-      model: deepseek/deepseek-reasoner             # near-free paid anchor so the tier never hard-fails (E17)
-      api_key: os.environ/DEEPSEEK_API_KEY
-      rpm: 60
+      model: groq/openai/gpt-oss-120b               # strong + fastest tier on Groq (E12)
+      api_key: os.environ/GROQ_API_KEY
+      rpm: 20
+      tpm: 6000
+  # NOTE: no Gemini Pro here on purpose — gemini-3.1-pro-preview and
+  # gemini-pro-latest both return 429 on a free key. Add them only with billing
+  # enabled, or keep a near-free DeepSeek key as the paid anchor (see bottom).
 
   # --- GROUP sonnet: implementer tier. Fast free workhorses, quota pooling.
   - model_name: sonnet
     litellm_params:
-      model: gemini/gemini-3.8-flash                # free tier reported available (E11 secondary — verify)
+      model: gemini/gemini-3.5-flash                # reliable free workhorse (~1.4s)
       api_key: os.environ/GEMINI_API_KEY
       rpm: 10
       tpm: 250000
   - model_name: sonnet
     litellm_params:
-      model: groq/llama-3.3-70b-versatile           # free tier (E12); TPM community-reported — verify in console
+      model: groq/openai/gpt-oss-120b               # ~0.6s
       api_key: os.environ/GROQ_API_KEY
       rpm: 30
       tpm: 6000
+      reasoning_effort: low                         # keeps output budget for content, not reasoning
   - model_name: sonnet
     litellm_params:
-      model: openrouter/qwen/qwen3-coder:free       # swap for any current :free coder (E13)
+      model: openrouter/cohere/north-mini-code:free  # free coding model (E13)
       api_key: os.environ/OPENROUTER_API_KEY
       rpm: 10
   - model_name: sonnet
     litellm_params:
-      model: deepseek/deepseek-chat                 # near-free fallback: work never stalls (E17)
-      api_key: os.environ/DEEPSEEK_API_KEY
-  - model_name: sonnet
-    litellm_params:
-      model: ollama_chat/qwen2.5-coder:7b           # local zero-quota last resort (ollama pull first)
-      api_base: os.environ/OLLAMA_BASE
+      model: gemini/gemini-3.5-flash-lite           # last free resort in this group
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 15
+      tpm: 250000
 
-  # --- GROUP haiku: harness tier. The harness agent only runs commands and
-  # reports a schema-validated JSON verdict (E2/E4) — tiny models suffice.
+  # --- GROUP haiku: harness tier. Tiny models suffice for running commands and
+  # reporting a schema-validated verdict (E2/E4); speed is what matters here.
   - model_name: haiku
     litellm_params:
-      model: groq/llama-3.1-8b-instant              # extreme tokens/sec on free tier (E12)
+      model: groq/openai/gpt-oss-20b                # ~0.4s on the free tier (E12)
       api_key: os.environ/GROQ_API_KEY
       rpm: 30
       tpm: 6000
+      reasoning_effort: low
   - model_name: haiku
     litellm_params:
-      model: gemini/gemini-3.8-flash-lite           # verify current lite-class free tier (E11)
+      model: gemini/gemini-3.5-flash-lite           # ~1.0s
       api_key: os.environ/GEMINI_API_KEY
+      rpm: 15
+      tpm: 250000
   - model_name: haiku
     litellm_params:
-      model: ollama_chat/qwen2.5-coder:1.5b         # local fallback
-      api_base: os.environ/OLLAMA_BASE
+      model: gemini/gemini-3.1-flash-lite           # second Gemini lite, 3x verified content
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 15
+      tpm: 250000
+  # Deliberately NOT using openrouter/liquid/lfm-2.5-2.6b:free here: measured
+  # 100% empty content (2.6B model, too weak). OpenRouter's free tier also
+  # returned 429s under a 3-prompt test, so it stays out of the latency-critical
+  # tier and is used only as an extra voice in opus/sonnet.
+
+  # --- OPTIONAL: DeepSeek near-free anchor (E17). Needs a funded key in .env.
+  # Uncomment to make the opus group never hard-fail on a genuinely hard task.
+  # - model_name: opus
+  #   litellm_params:
+  #     model: deepseek/deepseek-reasoner
+  #     api_key: os.environ/DEEPSEEK_API_KEY
+  #     rpm: 60
+
+  # --- OPTIONAL: Ollama local fallback. Needs `ollama pull <model>` + `ollama serve`.
+  # - model_name: haiku
+  #   litellm_params:
+  #     model: ollama_chat/qwen2.5-coder:1.5b
+  #     api_base: os.environ/OLLAMA_BASE
 
 router_settings:
   routing_strategy: usage-based-routing-v2   # spread load within group respecting rpm/tpm (E11)
