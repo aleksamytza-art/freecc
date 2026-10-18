@@ -26,6 +26,7 @@
     <button id="tabbtn-report" data-t="report" role="tab" aria-selected="false" aria-controls="tab-report">7 · Report</button>
     <button id="tabbtn-providers" data-t="providers" role="tab" aria-selected="false" aria-controls="tab-providers">8 · Providers</button>
     <button id="tabbtn-grades" data-t="grades" role="tab" aria-selected="false" aria-controls="tab-grades">9 · Grades</button>
+    <button id="tabbtn-research" data-t="research" role="tab" aria-selected="false" aria-controls="tab-research">10 · Research</button>
   </nav>
   <div class="hdr-right">
     <span class="chip">project <b id="chipProj">—</b></span>
@@ -157,6 +158,28 @@
     <h3>Every issue, graded</h3>
     <p class="lead">Sorted worst first. Click a row to open that issue in the cloud and see its failing checks.</p>
     <div class="card" style="padding:6px"><table id="gradeTable"></table></div>
+  </section>
+
+  <!-- ============ RESEARCH ============ -->
+  <section id="tab-research" class="tab" role="tabpanel" aria-labelledby="tabbtn-research">
+    <h2>Research — the routed run, its gates and its honest gaps</h2>
+    <p class="lead" id="rsLead">Loading the latest run…</p>
+    <div class="row" id="rsStats" style="margin-bottom:12px"></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+      <div class="card">
+        <h3 style="margin-top:0">Decomposition — move a weight, the ranking changes</h3>
+        <p class="small muted">Adjusting these re-scores the same gated candidates. It does not crawl again: new pages come from re-running the command in the panel above.</p>
+        <div id="rsTree"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Honest gaps</h3>
+        <div id="rsGaps"></div>
+      </div>
+    </div>
+    <h3>Results <span id="rsCount" class="small muted"></span></h3>
+    <p class="lead">Each row is a real listing. Click one to see every gate, the exact excerpt from its source page, and which of your weights actually counted.</p>
+    <div class="card" style="padding:6px"><table id="rsTable"></table></div>
+    <div id="rsDetail"></div>
   </section>
 </main>
 
@@ -324,6 +347,8 @@ OUTPUT: index table · one change (diff) · prediction + falsifier · gate resul
 <script src="assets/data.js"></script>
 <script src="assets/providers.js"></script>
 <script src="assets/grades.js"></script>
+<script src="data/research-latest.js"></script>
+<script src="assets/research-view.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

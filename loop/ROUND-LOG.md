@@ -97,3 +97,33 @@ the verifier. A finding is only accepted when a measurement backs it.
 The grade distribution is unchanged **on purpose**. A loop that improves an app which grades
 claims must not improve its own grades; that would be the one regression that invalidates every
 other number in this table.
+
+---
+
+## Rounds 4–7 — the research core (the part that was actually missing)
+
+The scorecard above fixed an app that only *planned*. The concept needs it to *find*. So the same
+loop was run against a new target: `ui/research/`. Acceptance criteria were written down before
+the fixes (`ui/research/ACCEPTANCE.md`), not after.
+
+Each round is a real crawl against live listings. The failures are the interesting part.
+
+| Round | What was measured | What was wrong | Fix |
+|---|---|---|---|
+| 4 | first crawl, 57 rows → 16 "admissible" | **windows, balcony doors and a bathtub passed every gate.** The gates checked claim-vs-page, never claim-vs-reality: "Balcony door, €99" really does say €99 on its page | added a `type` gate and a `plausible` gate; a price below €300 — or above €400/m² — is not a land price |
+| 5 | re-crawl, 20 rows → 8 "land plots" | the land category path served a 404 page whose body listed **apartments**; detail links 404'd on the wrong host | reverted to the proven search endpoint; detail pages live on the `reality.` subdomain and are linked absolutely |
+| 6 | re-crawl, 20 rows → 4 plots | "32m2" made an apartment count as land; a bathtub from the `sluzby.` section slipped through | land words no longer include `m²`; the gate now trusts the site's own category host over wording |
+| 7 | final crawl, 80 rows → 15 shortlisted → **10 returned, 9 admissible** | pool too small for ten results | four query terms instead of one; shortlist prefers plots already showing ≥800 m² |
+
+Final run (real, 2026-10-18T15-03-53Z): €2,920 for 2,794 m² (score 93), €5,000 for 29,127 m²
+(88), €1,000 for 8,390 m² (80), and a listing titled *"Rekreačný pozemok pri lese (glamping…)"* at
+€15,000. Two rows shown as **blocked**: a collector's card and a bathtub — both of which had
+passed the naive filter in round 4.
+
+What the loop changed in the design, not just the code: a gate that only checks whether the page
+agrees with what we read cannot catch a listing that is not the thing we asked for. That is why
+`type` and `plausible` are critical gates now, and why the site's category host — its own routing —
+outranks any keyword.
+
+Honest gaps unchanged by all of this: **climate, legality and scenery still have no mechanical
+source.** They are labelled UNVERIFIED and their weight is excluded from the score.

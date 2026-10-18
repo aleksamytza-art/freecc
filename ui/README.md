@@ -116,6 +116,55 @@ QUALITY.md              the targets this app is measured against (machine + manu
 reference/              the original single-file attachment, untouched
 ```
 
+## Research — the core of the app
+
+The tabs above plan and grade work. The **Research** tab is the part that actually goes and finds
+something, and it is the reason the rest exists.
+
+```bash
+cd ui
+node research/run.mjs --count 10 --budget 20000     # crawl, gate, score, write the run
+node research/run.mjs --dry                         # decomposition only, no requests
+```
+
+Pipeline (`ui/research/`):
+
+```
+request.json ──► decompose.mjs ──► 6 criteria, weights, and which ones are checkable
+                     │
+                     ▼
+              sources/bazos.mjs ──► list rows (price, m², location, url)
+                     │
+                     ▼
+                one fetch per shortlisted plot ──► its own page text
+                     │
+                     ▼
+                  gates.mjs ──► type · plausible · title · price · area · location
+                     │           each returns PASS/FAIL + the excerpt it matched
+                     ▼
+                  score.mjs ──► rank by the user's weights (unverified weights excluded)
+                     │
+                     ▼
+        ui/data/research-latest.js ──► the Research tab
+```
+
+What makes a row a **result** rather than a suggestion: its critical gates pass. It must be in the
+real-estate section, be land, have a plausible price, and that price must appear **on its own
+page** — the gate carries the matched excerpt so anyone can check it without trusting the code or
+a model.
+
+Example run (real, 2026-10-18): 80 rows scanned → 15 shortlisted → 10 returned, 9 admissible,
+including a 2 794 m² plot at €2,920 and a 29 127 m² plot at €5,000. Two listings were blocked by
+the gates — a bathtub and a trading card, both of which had passed a naive keyword filter.
+
+**Honest gaps.** Climate, legality and scenery cannot be settled by a mechanical check. They appear
+in the run with `UNVERIFIED` and their weight is *excluded* from the score, never silently
+diluted. [ACCEPTANCE.md](research/ACCEPTANCE.md) defines the acceptance criteria and the
+non-goals.
+
+**Politeness.** One request per query and per shortlisted plot, ≥750 ms apart, hard cap on pages.
+This is a demonstrator, not a crawler; the source site's terms are yours to respect.
+
 ## Quality, not vibes
 
 **[QUALITY.md](QUALITY.md)** is the scorecard: it separates what a script can prove from what a

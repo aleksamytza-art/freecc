@@ -1,0 +1,21 @@
+{
+  "id": "glamping-plots-sk",
+  "goal": "Find 10 plots for a glamping business: under €20,000, mild year-round climate, legal for tourist accommodation, scenic setting",
+  "country": "sk",
+  "budgetEur": 20000,
+  "count": 10,
+  "minAreaM2": 800,
+  "queries": ["pozemok", "parcela", "zahrada", "luka"],
+  "source": {
+    "id": "bazos-reality",
+    "label": "Bazos.sk — search restricted to land listings",
+    "searchUrl": "https://www.bazos.sk/search.php?hledat={q}&cenado={max}",
+    "note": "Search endpoint of the public classifieds, budget-capped. Detail pages live on the reality.bazos.sk subdomain and are linked absolutely from the result rows. The site answers 404 while serving a valid body, so the parser trusts parsed rows rather than the status code."
+  },
+  "weights": { "price": 30, "area": 20, "access": 15, "scenery": 20, "climate": 15 },
+  "gates": {
+    "mechanical": ["type", "plausible", "title", "price", "area", "location"],
+    "unverified": ["legality", "climate", "scenery"]
+  },
+  "plausibility": { "minPriceEur": 300, "maxPricePerM2": 400 }
+}

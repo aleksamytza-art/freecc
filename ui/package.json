@@ -9,9 +9,10 @@
   },
   "scripts": {
     "start": "node scripts/serve.mjs",
-    "check": "node --check assets/data.js && node --check assets/app.js",
-    "test": "node --test tests/data.test.mjs tests/grades.test.mjs",
+    "check": "node --check assets/data.js && node --check assets/app.js && node --check assets/research-view.js && node --check research/run.mjs && node --check research/gates.mjs && node --check research/score.mjs && node --check research/text.mjs && node --check research/decompose.mjs && node --check research/sources/bazos.mjs",
+    "test": "node --test tests/data.test.mjs tests/grades.test.mjs tests/research.test.mjs",
     "verify:render": "node scripts/verify-render.mjs",
+    "research": "node research/run.mjs",
     "verify": "npm run check && npm test && npm run verify:render"
   },
   "files": [

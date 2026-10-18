@@ -51,7 +51,7 @@ for (const a of ASSETS) sizes[a] = statSync(join(UI_ROOT, a)).size;
 sizes.total = Object.values(sizes).reduce((a, b) => a + b, 0);
 
 /* ---------------------------------------------------------------- 2. tests */
-const TESTS = ['tests/data.test.mjs', 'tests/grades.test.mjs'];
+const TESTS = ['tests/data.test.mjs', 'tests/grades.test.mjs', 'tests/research.test.mjs'];
 
 function runTests() {
   return Promise.all(TESTS.map((file) => new Promise((resolvePromise) => {

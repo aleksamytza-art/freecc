@@ -36,7 +36,7 @@ const UPDATE = process.argv.includes('--update');
    This visits every view before the DOM is serialized, which is what makes the
    table/badge assertions and the snapshot meaningful. */
 const VISIT_ALL = `<script>
-(function(){ ['build','cloud','issues','indexes','evidence','prompts','report','providers','grades']
+(function(){ ['build','cloud','issues','indexes','evidence','prompts','report','providers','grades','research']
   .forEach(function(t){ try{ gotoTab(t); }catch(e){} });
   try{ gotoTab('cloud'); }catch(e){} })();
 </script>`;
