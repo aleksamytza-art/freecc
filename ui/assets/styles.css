@@ -78,3 +78,34 @@
   details.acc summary{cursor:pointer; font-weight:700; color:var(--txt)}
   details.acc summary small{color:var(--dim); font-weight:400; margin-left:8px}
   .muted{color:var(--dim)} .small{font-size:12px}
+
+/* ---- grades (ported from free-research-llm) ---- */
+.badge-g{display:inline-block;font-size:10px;font-weight:800;border-radius:5px;padding:2px 7px;
+  border:1px solid currentColor;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+.g-verified{color:var(--gr)} .g-supported{color:var(--cy)}
+.g-weak{color:var(--am)} .g-unsupported{color:var(--rd)}
+.gscore{font-variant-numeric:tabular-nums;font-weight:800;min-width:38px;display:inline-block}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
+.chk .ok{color:var(--gr);font-weight:800;flex:0 0 auto}
+.chk .no{color:var(--rd);font-weight:800;flex:0 0 auto}
+.chk .crit{color:var(--dim);font-size:10px;border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
+.sumchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:8px 13px;font-weight:700}
+.sumchip .n{font-size:19px;font-variant-numeric:tabular-nums}
+.verdict{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.verdict .v{font-size:26px;font-weight:900;letter-spacing:.5px}
+
+/* ---- providers ---- */
+.prov{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px}
+.prov h4{font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.prov .url{font-size:11px;color:var(--dim);word-break:break-all;margin:6px 0}
+.prov .note{font-size:12px;color:var(--dim);margin-top:7px}
+.prov .models{font-size:11px;margin-top:7px}
+.prov .models b{color:var(--cy);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.tier{font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;border:1px solid currentColor;text-transform:uppercase}
+.t-free{color:var(--gr)} .t-paid{color:var(--am)} .t-local{color:var(--vi)}
+.rolechip{font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;border:1px solid var(--line);color:var(--txt)}
+.rolechip.deep{border-color:var(--vi);color:var(--vi)}
+.rolechip.fast{border-color:var(--bl);color:var(--bl)}
+.rolechip.reviewer{border-color:var(--am);color:var(--am)}
+.v-ok{color:var(--gr);font-weight:700} .v-doc{color:var(--dim)}

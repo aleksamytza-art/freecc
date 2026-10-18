@@ -189,12 +189,14 @@ test('generated sub-issues cite real evidence and gates', () => {
 });
 
 test('index.html loads the app assets, in order, and nothing external', () => {
-  const order = ['assets/data.js', 'assets/app.js'].map((f) => html.indexOf(f));
-  assert.ok(order.every((i) => i >= 0), 'both scripts must be referenced');
-  assert.ok(order[0] < order[1], 'data.js must load before app.js (it defines the ledgers)');
+  const scripts = ['assets/data.js', 'assets/providers.js', 'assets/grades.js', 'assets/app.js'];
+  const order = scripts.map((f) => html.indexOf(f));
+  assert.ok(order.every((i) => i >= 0), `all scripts must be referenced: ${scripts.join(', ')}`);
+  assert.deepEqual(order.slice().sort((a, b) => a - b), order,
+    'scripts must load in dependency order (data -> providers -> grades -> app)');
   assert.ok(html.includes('assets/styles.css'), 'stylesheet must be linked');
 
-  for (const file of ['assets/data.js', 'assets/app.js', 'assets/styles.css']) {
+  for (const file of [...scripts, 'assets/styles.css']) {
     assert.ok(existsSync(join(UI_ROOT, file)), `${file} is missing`);
   }
 

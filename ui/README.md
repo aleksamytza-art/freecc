@@ -7,6 +7,14 @@ Zero dependencies, zero network requests, no build step. Open `index.html` and i
 
 ![FREECC UI — the dependency cloud for the baseline tree, with the side panel showing the seven rules of truth](docs/preview.png)
 
+Grades view — the mechanical rubric applied to the plan, with a computed verdict:
+
+![FREECC UI — grades view](docs/preview-grades.png)
+
+Providers view — the free-provider roster and role routing:
+
+![FREECC UI — providers view](docs/preview-providers.png)
+
 ```
 describe an outcome  ─▶  detect outcome-domains  ─▶  generate a gated issue tree
                                                           │
@@ -41,6 +49,34 @@ Node is only needed for the dev server and the verification scripts, never to *u
 | **5 · Evidence** | Ledger `E1–E19` (primary / secondary / empirical), click-through from any `E#` chip. |
 | **6 · Prompts** | The verified prompt library `P0–P8` with copy-to-clipboard. Bodies live in the HTML as `<script type="text/template">`. |
 | **7 · Report** | Gate report `G01–G18` plus a `replay` that re-runs the gate animation. |
+| **8 · Providers** | The free-provider roster ported from `free-research-llm`: 13 providers with tier, roles, base URL, key env var, model preference lists and an honest note; role routing for `deep` / `fast` / `reviewer`; 9 search backends; and the two rules that keep a free fleet alive (never hard-code a model id; filter non-chat models out of `/models`). |
+| **9 · Grades** | The mechanical rubric `verified / supported / weak / unsupported` applied to every issue, plus a computed `GO / GO-IF / NO-GO` verdict over the weighted critical path. |
+
+## Ported capabilities
+
+Two capabilities are ported from **[free-research-llm](https://github.com/bezgolovyponch/free-research-llm)**
+(MIT, commit `d5ca596`) — an analytical-research engine that grades every answer mechanically:
+
+1. **The grading rubric** (`src/research/verify.mjs` → `assets/grades.js`). Upstream grades a
+   research answer; here the same seven checks grade an *issue*. Critical failures mean
+   `unsupported`; any other failure costs one level; `verified` additionally needs two independent
+   domains and a gate. A node marked `RESOLVED` with no evidence behind it still grades
+   `unsupported`, because status is a claim and the grade is a measurement.
+
+   One deliberate difference, stated so it is not mistaken for a bug: upstream applies the
+   2+ domain rule only to answers claiming *high* confidence, while here it applies to every
+   issue. That is why much of the shipped baseline grades `weak` — its citations cluster on
+   `npmjs.com` and `arxiv.org`. The Grades tab says so explicitly, and counts the issues that are
+   weak *only* for that reason.
+
+2. **The provider roster and role routing** (`src/llm/presets.mjs` → `assets/providers.js`).
+   Includes the reviewer role, which must resolve to a *different* provider than the one that
+   produced the answer — the same "verifier is never the doer" rule FREECC already relies on.
+
+The source repo's hardest-won lesson is recorded there too, because this project learned it the
+same way: **model ids are read from `/models` and matched against an ordered preference list,
+never hard-coded.** `router/.env.example` shipped `gemini-3-pro` (never existed) and
+`qwen3-coder:free` (withdrawn); the same class of error cost this repo a debugging session.
 
 ## The truth rules are enforced in code
 
@@ -59,34 +95,50 @@ drift from the ledger.
 ## Layout
 
 ```
-index.html              app shell; holds the P0–P8 prompt templates
+index.html              app shell; holds the P0-P8 prompt templates
 assets/styles.css       the entire stylesheet
-assets/data.js          ledger E1–E19, gates G01–G18, indexes I1–I9,
-                        prompts P0–P8, 7 truth rules, the FREECC engine subtree,
+assets/data.js          ledger E1-E19, gates G01-G18, indexes I1-I9,
+                        prompts P0-P8, 7 truth rules, the FREECC engine subtree,
                         the outcome-domain lexicon
+assets/providers.js     provider roster + role routing + search backends
+                        (ported from free-research-llm)
+assets/grades.js        the mechanical grading rubric + verdict roll-up
+                        (ported from free-research-llm)
 assets/app.js           engine (detection, generation, ordering, layout),
-                        SVG cloud, panels, tables, wizard, boot
+                        SVG cloud, panels, tables, wizard, providers, grades, boot
 scripts/serve.mjs       zero-dependency static server
-scripts/verify-render.mjs  headless-browser equivalence + boot checks
+scripts/verify-render.mjs  headless-browser boot + port + snapshot checks
 tests/data.test.mjs     data invariants (node:test)
+tests/grades.test.mjs   rubric + roster invariants (node:test)
+tests/snapshots/        rendered-DOM regression snapshot
 reference/              the original single-file attachment, untouched
 ```
 
 ## Verification
 
 ```bash
-npm run check          # node --check on both scripts
-npm test               # 14 data invariants
-npm run verify:render  # headless Chrome: render equivalence + boot assertions
+npm run check          # node --check on all four scripts
+npm test               # 28 invariants across two suites
+npm run verify:render  # headless Chrome: boot + ported capabilities + snapshot
 npm run verify         # all three
 ```
 
-`scripts/verify-render.mjs` is the interesting one. This app began as a single-file HTML
-attachment; the sources were split into `styles.css` / `data.js` / `app.js` with **no functional
-edits**. The script renders `reference/freecc-ui.original.html` and `index.html` in headless
-Chrome and compares the resulting `<body>` byte-for-byte (ignoring the `<link>` and `<script>`
-tags that were intentionally moved). Identical output is the proof that the split changed
-nothing, and it is re-checked on every push.
+`scripts/verify-render.mjs` renders the page in a real browser and asserts three things:
+
+1. **Boot** — the cloud, issue table, gates, ledger and prompts actually populated.
+2. **Port present** — the provider roster, the role-routing matrix, the grade table and a computed
+   verdict are on screen. A silent revert of the ported capabilities fails the build instead of
+   passing it.
+3. **Snapshot** — the rendered text and structural counts match
+   `tests/snapshots/fingerprint.json`. A fingerprint is used rather than raw DOM because Chrome
+   builds differ in SVG serialization and attribute order, which would fail CI for no real
+   reason. Run `node scripts/verify-render.mjs --update` to rewrite it, but only when you
+   *intend* to change the UI.
+
+This replaced the earlier byte-equivalence test, which was only meaningful while the split from
+the single-file original was behaviour-neutral. `reference/freecc-ui.original.html` is still kept
+and still rendered on every run, and the script asserts the current build *differs* from it — so
+the provenance claim stays checkable while the app is allowed to grow.
 
 It exits `0` with `SKIP` when no Chromium-family browser is present; set `CHROME_PATH` to point
 at one explicitly.

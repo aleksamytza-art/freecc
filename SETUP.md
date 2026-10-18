@@ -223,10 +223,19 @@ stack refers to those three names.
 
 ## Part 4 — Start the router and prove it
 
-On Windows, **PowerShell**:
+On Windows, **double-click** `router\start.cmd` — or from any shell:
 
 ```powershell
 cd C:\path\to\freecc
+.\router\start.cmd
+```
+
+`start.cmd` wraps `start.ps1` with `-ExecutionPolicy Bypass`, because a default PowerShell
+refuses to run `.ps1` files ("running scripts is disabled on this system"). If you prefer
+PowerShell directly, allow local scripts once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 .\router\start.ps1
 ```
 
@@ -410,7 +419,8 @@ node cascade/simulate.mjs --n 1000      # strategy simulation, no keys needed
 | `Address already in use` on 4000 | old router still running | close the other window, or `PORT=4001 bash router/start.sh` |
 | Keys work, agent still hits api.anthropic.com | env not sourced | use `harness/run-claude-code.sh`, do not start `claude` directly |
 | PowerShell TLS / certificate errors on `curl` | PowerShell's network stack | use **Git Bash** for `curl` commands |
-| `UnicodeEncodeError: 'charmap' codec` at startup | LiteLLM banner vs a non-UTF-8 console | use `router/start.ps1`, or set `PYTHONIOENCODING=utf-8` before starting |
+| `UnicodeEncodeError: 'charmap' codec` at startup | LiteLLM banner vs a non-UTF-8 console | use `router/start.cmd`, or set `PYTHONIOENCODING=utf-8` before starting |
+| `start.ps1 cannot be loaded because running scripts is disabled` | PowerShell execution policy | use `router\start.cmd`, or `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | HTTP 200 but **empty** `content` | a tiny free model too weak to answer | delete that model from its group — measured example: `liquid/lfm-2.5-2.6b:free` returned empty 100% of the time |
 | Gemini 404 *"no longer available to new users"* | the model was retired | `gemini-2.5-*` is retired now; use a current `flash` id (Part 3.4) |
 | Gemini 429 on *pro* models | pro tiers are not free | keep `opus` on the strongest **flash** model, or add billing / a near-free DeepSeek key |

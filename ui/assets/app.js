@@ -247,7 +247,8 @@ function renderPanel(){
   const pr=prereqs(n.id);
   const prioPct=Math.round(100*PRIO[n.id]/PROJECT.maxPrio);
   let html='<h2><span class="mono">'+esc(n.id)+'</span> '+esc(n.t)+'</h2>';
-  html+='<div class="row" style="margin:6px 0">'+badge+(gap?'<span class="badge b-gap">EVIDENCE GAP</span>':'')+(n.sim&&n.st!=="resolved"?'<span class="badge b-sim">sim-gate available</span>':'')+'</div>';
+  const gr=gradeOf(n);
+  html+='<div class="row" style="margin:6px 0">'+badge+(gap?'<span class="badge b-gap">EVIDENCE GAP</span>':'')+(n.sim&&n.st!=="resolved"?'<span class="badge b-sim">sim-gate available</span>':'')+'<span class="badge-g g-'+gr.grade+'">'+gr.grade+' · '+gr.score+'%</span></div>';
   html+='<div class="kv"><b>Why it matters (resolution priority)</b><div class="small muted">'+prioPct+'% of max unlock power — resolving it frees '+transitiveDependents(n.id).size+' downstream issue(s)</div><div class="bar"><i style="width:'+prioPct+'%"></i></div></div>';
   html+='<div class="kv"><b>Statement</b><p>'+esc(n.d)+'</p></div>';
   if(n.vars)html+='<div class="kv"><b>Variables</b><p class="small">'+esc(n.vars)+'</p></div>';
@@ -257,6 +258,10 @@ function renderPanel(){
   if(n.ix&&n.ix.length)html+='<div class="kv"><b>Spectral indexes</b><div>'+n.ix.map(i=>'<span class="pill i" onclick="gotoTab(\'indexes\')">'+i+'</span>').join("")+'</div></div>';
   html+='<div class="kv"><b>Recommended prompt</b><div><span class="pill p" onclick="gotoPrompt(\''+n.p+'\')">'+n.p+' · '+esc((PROMPTS.find(p=>p.id===n.p)||{n:""}).n)+'</span></div></div>';
   if(n.oq)html+='<div class="kv"><b>Open question (honesty ledger)</b><p class="small" style="color:var(--rd)">'+esc(n.oq)+'</p></div>';
+  html+='<div class="kv"><b>Mechanical checks — '+gr.score+'% passed</b>'+
+    gr.checks.map(c=>'<div class="chk"><span class="'+(c.passed?'ok':'no')+'">'+(c.passed?'✓':'✗')+'</span><span class="small">'+esc(c.label)+(c.critical?'<span class="crit">critical</span>':'')+'<br><span class="muted">'+esc(c.detail)+'</span></span></div>').join("")+
+    (gr.escalate?'<p class="small" style="color:var(--am);margin-top:7px">Weak or unsupported work is exactly what buys the next rung — escalate with P7 before spending more.</p>':'')+
+    '</div>';
   // dependency chain
   html+='<div class="kv"><b>Dependency chain</b><p class="small muted">blocked by: '+(pr.length?pr.map(p=>'<span class="pill" onclick="selectNode(\''+p+'\')">'+esc(p)+'</span>').join(""):'<i>nothing — atomic</i>')+'<br>unlocks: '+(deps.length?deps.map(d=>'<span class="pill" onclick="selectNode(\''+d+'\')">'+esc(d)+'</span>').join(""):'<i>terminal output</i>')+'</p></div>';
   // action buttons
@@ -324,7 +329,7 @@ function renderIssues(){
     else {x=(a.ev||[]).length;y=(b.ev||[]).length;}
     return (x<y?-1:x>y?1:0)*sortDir;
   });
-  let h='<tr><th data-k="prio">priority ▾</th><th data-k="col">layer</th><th>id</th><th>issue</th><th data-k="st">status</th><th data-k="ev">evidence</th><th>gates</th><th>prompt</th></tr>';
+  let h='<tr><th data-k="prio">priority ▾</th><th data-k="col">layer</th><th>id</th><th>issue</th><th data-k="st">status</th><th>grade</th><th data-k="ev">evidence</th><th>gates</th><th>prompt</th></tr>';
   rows.forEach(n=>{
     const st=effStatus(n);
     const pct=Math.round(100*PRIO[n.id]/PROJECT.maxPrio);
@@ -332,6 +337,7 @@ function renderIssues(){
       '<td><div style="display:flex;align-items:center;gap:6px"><b>'+pct+'%</b><div class="bar" style="width:70px"><i style="width:'+pct+'%"></i></div></div></td>'+
       '<td class="mono small">L'+n.col+'</td><td class="mono"><b>'+esc(n.id)+'</b></td><td>'+esc(truncate(n.t,60))+'</td>'+
       '<td><span class="dot" style="background:'+STCOL[st]+'"></span>'+st+'</td>'+
+      '<td>'+(function(){const g=gradeOf(n);return '<span class="badge-g g-'+g.grade+'">'+g.grade+'</span>';})()+'</td>'+
       '<td>'+(n.ev.length?n.ev.join(", "):'<span style="color:var(--rd)">GAP</span>')+'</td>'+
       '<td class="small">'+(n.g&&n.g.length?n.g.join(", "):"—")+'</td><td class="mono">'+esc(n.p)+'</td></tr>';
   });
@@ -403,7 +409,117 @@ function toast(msg){
   const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block";
   clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none",4200);
 }
-function renderAll(){ renderCloud(); renderPanel(); renderIssues(); renderFooter(); if(CRIT)highlightCritical(); applySearch(); }
+/* ---------- providers + grades (capabilities ported from free-research-llm) ---------- */
+let GRADE_MAP={};
+function computeGrades(){
+  GRADE_MAP=gradeAll(PROJECT.nodes,{EVIDENCE:EVIDENCE,GATES:GATES,INDEXES:INDEXES});
+  return GRADE_MAP;
+}
+function gradeOf(n){
+  return GRADE_MAP[n.id]||gradeNode(n,{EVIDENCE:EVIDENCE,GATES:GATES,INDEXES:INDEXES});
+}
+/* The chain that decides the outcome: the highest total weight path to L0. */
+function weightedCriticalPath(){
+  const w={}; PROJECT.nodes.forEach(n=>{w[n.id]=n.w||1;});
+  const memo={};
+  function best(id){
+    if(memo[id])return memo[id];
+    let top=null;
+    dependents(id).forEach(d=>{ const c=best(d); if(!top||c.val>top.val) top=c; });
+    const res=top?{val:w[id]+top.val,path:[id].concat(top.path)}:{val:w[id],path:[id]};
+    memo[id]=res; return res;
+  }
+  let winner=null;
+  PROJECT.nodes.forEach(n=>{ const r=best(n.id); if(!winner||r.val>winner.val) winner=r; });
+  return winner?winner.path:[];
+}
+function renderProviders(){
+  let rt='<tr><th style="width:110px">role</th><th>order — first choice wins, 429 moves to the next</th></tr>';
+  ["deep","fast","reviewer"].forEach(r=>{
+    rt+='<tr><td><span class="rolechip '+r+'">'+r+'</span></td><td>'+ROUTE_ORDER[r].map((id,i)=>{
+      const p=PROVIDERS.find(x=>x.id===id);
+      const mark=p&&p.verified?' <span class="v-ok" title="verified on this machine">✓</span>':'';
+      return '<span class="pill">'+(i+1)+' · '+esc(p?p.label:id)+mark+'</span>';
+    }).join("")+'</td></tr>';
+  });
+  document.getElementById("routeTable").innerHTML=rt;
+
+  document.getElementById("provGrid").innerHTML=PROVIDERS.map(p=>
+    '<div class="prov"><h4>'+esc(p.label)+
+      ' <span class="tier t-'+esc(p.tier)+'">'+esc(p.tier)+'</span>'+
+      (p.verified?'<span class="v-ok" title="this machine received real content">&check; verified</span>':'<span class="v-doc">documented</span>')+
+    '</h4><div>'+p.roles.map(r=>'<span class="rolechip '+r+'">'+r+'</span>').join(" ")+
+      (p.freeOnly?' <span class="rolechip">:free only</span>':'')+'</div>'+
+    '<div class="url mono">'+esc(p.baseURL||"(your own endpoint)")+'</div>'+
+    '<div class="small">key: <span class="mono">'+esc(p.keyEnv||"none")+'</span>'+
+      (p.signup?' · <a href="'+p.signup+'" target="_blank" rel="noopener">get a key</a>':'')+'</div>'+
+    '<div class="models"><b>fast</b> '+p.preferFast.map(m=>'<span class="pill">'+esc(m)+'</span>').join("")+'</div>'+
+    '<div class="models"><b>deep</b> '+p.preferDeep.map(m=>'<span class="pill">'+esc(m)+'</span>').join("")+'</div>'+
+    '<div class="note">'+esc(p.note)+'</div></div>'
+  ).join("");
+
+  let st='<tr><th style="width:140px">backend</th><th style="width:220px">env var</th><th>note</th></tr>';
+  SEARCH.forEach(s=>{
+    st+='<tr><td><b>'+esc(s.label)+'</b></td><td class="mono small">'+esc(s.env)+'</td><td class="small">'+esc(s.note)+
+      (s.signup?' · <a href="'+s.signup+'" target="_blank" rel="noopener">signup</a>':'')+'</td></tr>';
+  });
+  document.getElementById("searchTable").innerHTML=st;
+  document.getElementById("nonChatRegex").textContent=NON_CHAT_MODEL;
+}
+function renderGrades(){
+  const grades=computeGrades();
+  const c=gradeCounts(grades);
+  document.getElementById("gradeSummary").innerHTML=
+    '<span class="sumchip"><span class="n" style="color:var(--gr)">'+c.verified+'</span>verified</span>'+
+    '<span class="sumchip"><span class="n" style="color:var(--cy)">'+c.supported+'</span>supported</span>'+
+    '<span class="sumchip"><span class="n" style="color:var(--am)">'+c.weak+'</span>weak</span>'+
+    '<span class="sumchip"><span class="n" style="color:var(--rd)">'+c.unsupported+'</span>unsupported</span>'+
+    '<span class="sumchip"><span class="n">'+PROJECT.nodes.length+'</span>issues graded</span>';
+
+  const path=weightedCriticalPath();
+  const v=rollupVerdict(path,grades);
+  const singleHost=PROJECT.nodes.filter(n=>{
+    const f=grades[n.id].checks.filter(c=>!c.passed);
+    return f.length===1&&f[0].id==="independent-domains";
+  });
+  const hosts={};
+  PROJECT.nodes.forEach(n=>{
+    grades[n.id].checks.forEach(c=>{
+      if(c.id==="independent-domains"&&!c.passed){const m=c.detail.match(/domain\(s\): (.+)$/);if(m)m[1].split(", ").forEach(h=>{hosts[h]=(hosts[h]||0)+1;});}
+    });
+  });
+  const topHosts=Object.keys(hosts).sort((a,b)=>hosts[b]-hosts[a]).slice(0,3);
+  document.getElementById("verdictCard").innerHTML=
+    '<div class="verdict"><span class="v" style="color:'+v.colour+'">'+v.verdict+'</span>'+
+    '<span class="small muted">rolled up from the grades of the '+path.length+'-issue critical path — computed, never typed in</span></div>'+
+    '<p class="small" style="margin-top:9px">'+esc(v.detail)+'</p>'+
+    (singleHost.length?'<p class="small" style="margin-top:7px;color:var(--am)">'+singleHost.length+' issue(s) are weak <i>only</i> because their evidence traces to a single host'+(topHosts.length?' ('+topHosts.map(h=>esc(h)+' ×'+hosts[h]).join(", ")+')':'')+'. One vendor page cannot corroborate itself.</p>':'')+
+    '<p class="small" style="margin-top:7px">critical path: '+path.map(id=>'<span class="pill" onclick="selectNode(\''+id+'\');gotoTab(\'cloud\')">'+esc(id)+'</span>').join("")+'</p>';
+
+  let ct='<tr><th>check</th><th style="width:110px">kind</th><th>fails when</th></tr>';
+  CHECK_DOC.forEach(d=>{
+    ct+='<tr><td><b>'+esc(d.label)+'</b></td><td>'+(d.critical?'<span class="badge-g g-unsupported">critical</span>':'<span class="badge-g g-weak">normal</span>')+'</td><td class="small muted">'+esc(d.why)+'</td></tr>';
+  });
+  document.getElementById("checksTable").innerHTML=ct;
+
+  const order={unsupported:0,weak:1,supported:2,verified:3};
+  const rows=PROJECT.nodes.slice().sort((a,b)=>
+    (order[grades[a.id].grade]-order[grades[b.id].grade])||(PRIO[b.id]-PRIO[a.id]));
+  let gt='<tr><th style="width:110px">grade</th><th style="width:70px">score</th><th style="width:80px">id</th><th>issue</th><th>failed checks</th><th style="width:100px">next step</th></tr>';
+  rows.forEach(n=>{
+    const g=grades[n.id];
+    const failed=g.checks.filter(x=>!x.passed);
+    gt+='<tr onclick="gotoTab(\'cloud\');selectNode(\''+n.id+'\')" style="cursor:pointer">'+
+      '<td><span class="badge-g g-'+g.grade+'">'+g.grade+'</span></td>'+
+      '<td><span class="gscore">'+g.score+'%</span></td>'+
+      '<td class="mono"><b>'+esc(n.id)+'</b></td>'+
+      '<td>'+esc(truncate(n.t,52))+'</td>'+
+      '<td class="small">'+(failed.length?failed.map(x=>'<span style="color:var(--am)">'+esc(x.label)+'</span>').join('<br>'):'<span class="muted">—</span>')+'</td>'+
+      '<td class="small">'+(g.escalate?'<span style="color:var(--rd)">P7 escalate</span>':'<span class="muted">'+(g.grade==="verified"?"hold":"maintain")+'</span>')+'</td></tr>';
+  });
+  document.getElementById("gradeTable").innerHTML=gt;
+}
+function renderAll(){ computeGrades(); renderCloud(); renderPanel(); renderIssues(); renderGrades(); renderFooter(); if(CRIT)highlightCritical(); applySearch(); }
 function gotoTab(name){
   document.querySelectorAll("section.tab").forEach(s=>s.classList.remove("on"));
   document.getElementById("tab-"+name).classList.add("on");
@@ -464,6 +580,6 @@ document.getElementById("goCloud").addEventListener("click",()=>gotoTab("cloud")
 document.getElementById("loadBaseline").addEventListener("click",()=>{ loadProject(baselineProject()); gotoTab("cloud"); toast("FREECC baseline loaded — I3.4 (mutate) and I4.3 (atlas) stay open: operator-run gates"); });
 
 /* ---------- boot ---------- */
-renderIndexes(); renderEvidence(); renderPrompts(); renderGates();
+renderProviders(); renderIndexes(); renderEvidence(); renderPrompts(); renderGates();
 loadProject(baselineProject());
 document.getElementById("ticker").textContent=TRUTH_RULES[0];

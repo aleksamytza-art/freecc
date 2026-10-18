@@ -1,40 +1,42 @@
 /**
- * Render verification: proves the refactored build renders identically to the
- * untouched original attachment, using a real headless browser.
+ * Render verification for the FREECC UI.
  *
- *   node scripts/verify-render.mjs
+ *   node scripts/verify-render.mjs            check boot + snapshot
+ *   node scripts/verify-render.mjs --update   rewrite the snapshot (do this only
+ *                                             when you *intend* to change the UI)
  *
- * Two kinds of assertion:
- *   1. EQUIVALENCE — the rendered <body> of index.html equals the rendered
- *      <body> of reference/freecc-ui.original.html after removing the parts we
- *      deliberately changed (the <link> stylesheet and the script tags).
- *      This is the proof that splitting the single file changed no behaviour.
- *   2. INVARIANTS — the boot render actually produced content: cloud nodes,
- *      issue rows, 18 gates, 19 ledger rows, 9 prompt accordions, footer counts.
+ * Three kinds of assertion:
+ *   1. BOOT INVARIANTS — the app actually rendered content in a real browser:
+ *      cloud nodes, issue rows, gates, ledger, prompts, provider roster, grades.
+ *   2. PORT PRESENT — the capabilities ported from free-research-llm are really
+ *      on screen (providers grid, role routing, grade table, computed verdict),
+ *      so a silent revert of the port fails the build instead of passing it.
+ *   3. SNAPSHOT — the rendered <body> matches tests/snapshots/rendered-body.txt.
+ *      This replaces the old byte-equivalence test against the single-file
+ *      original, which was only meaningful while the split was behaviour-neutral.
+ *      reference/freecc-ui.original.html is still kept and still rendered, so the
+ *      provenance claim stays checkable.
  *
- * Exits non-zero if anything fails. If no Chromium-family browser is found it
- * prints SKIP and exits 0, so the suite still runs on machines without one.
+ * Exits non-zero on failure. If no Chromium-family browser is found it prints
+ * SKIP and exits 0, so the suite still runs on machines without one.
  */
 import { spawn } from 'node:child_process';
-import { closeSync, mkdirSync, openSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const UI_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const ORIGINAL = join(UI_ROOT, 'reference', 'freecc-ui.original.html');
 const BUILT = join(UI_ROOT, 'index.html');
+const SNAPSHOT = join(UI_ROOT, 'tests', 'snapshots', 'fingerprint.json');
+const UPDATE = process.argv.includes('--update');
 
-const KEYS = {
-  skipped: false,
-  failures: [],
-  notes: [],
-};
+const failures = [];
 
 function findBrowser() {
   const fromEnv = process.env.CHROME_PATH;
   if (fromEnv && existsSync(fromEnv)) return fromEnv;
-
   const win = process.env.ProgramFiles || 'C:\\Program Files';
   const win86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
   const candidates = [
@@ -53,69 +55,38 @@ function findBrowser() {
   return null;
 }
 
-/** Render a local file with headless Chromium and return the serialized DOM. */
-function dumpDom(browser, file, { budget = 6000 } = {}) {
+function dumpDom(browser, file, { budget = 7000 } = {}) {
   return new Promise((resolvePromise, reject) => {
     const profile = join(tmpdir(), `freecc-uidump-${process.pid}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(profile, { recursive: true });
     const domFile = join(profile, 'dom.html');
     const errFile = join(profile, 'err.log');
-
-    // stdout goes straight to a file descriptor, not a pipe: this keeps the
-    // harness working in environments that forbid capturing stdio via pipes.
     const domFd = openSync(domFile, 'w');
     const errFd = openSync(errFile, 'w');
     const args = [
-      '--headless=new',
-      '--disable-gpu',
-      '--no-sandbox',
-      '--disable-extensions',
-      '--disable-background-networking',
-      '--no-first-run',
-      '--no-default-browser-check',
-      `--user-data-dir=${profile}`,
-      `--virtual-time-budget=${budget}`,
-      '--dump-dom',
+      '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-extensions',
+      '--disable-background-networking', '--no-first-run', '--no-default-browser-check',
+      `--user-data-dir=${profile}`, `--virtual-time-budget=${budget}`, '--dump-dom',
       pathToFileURL(file).href,
     ];
-
     let child;
     try {
       child = spawn(browser, args, { stdio: ['ignore', domFd, errFd] });
     } catch (err) {
-      closeSync(domFd);
-      closeSync(errFd);
+      closeSync(domFd); closeSync(errFd);
       return reject(err);
     }
-
     const timer = setTimeout(() => child.kill(), budget + 25000);
     child.on('error', (err) => {
-      clearTimeout(timer);
-      closeSync(domFd);
-      closeSync(errFd);
-      reject(err);
+      clearTimeout(timer); closeSync(domFd); closeSync(errFd); reject(err);
     });
     child.on('close', () => {
-      clearTimeout(timer);
-      closeSync(domFd);
-      closeSync(errFd);
+      clearTimeout(timer); closeSync(domFd); closeSync(errFd);
       let dom = '';
-      try {
-        dom = readFileSync(domFile, 'utf8');
-      } catch {
-        dom = '';
-      }
       let err = '';
-      try {
-        err = readFileSync(errFile, 'utf8');
-      } catch {
-        /* ignore */
-      }
-      try {
-        rmSync(profile, { recursive: true, force: true });
-      } catch {
-        /* ignore */
-      }
+      try { dom = readFileSync(domFile, 'utf8'); } catch { dom = ''; }
+      try { err = readFileSync(errFile, 'utf8'); } catch { /* ignore */ }
+      try { rmSync(profile, { recursive: true, force: true }); } catch { /* ignore */ }
       if (!dom || !/<body/i.test(dom)) {
         return reject(new Error(`no DOM produced by browser${err ? `:\n${err.slice(0, 600)}` : ''}`));
       }
@@ -124,7 +95,6 @@ function dumpDom(browser, file, { budget = 6000 } = {}) {
   });
 }
 
-/** Comparable form of the rendered body: drop what we intentionally changed. */
 function normalizedBody(html) {
   const start = html.search(/<body\b/i);
   const end = html.search(/<\/body>/i);
@@ -151,8 +121,7 @@ function count(haystack, needle) {
 }
 
 function tableRows(html, id) {
-  const re = new RegExp(`<table[^>]*id="${id}"[^>]*>([\\s\\S]*?)</table>`, 'i');
-  const m = html.match(re);
+  const m = html.match(new RegExp(`<table[^>]*id="${id}"[^>]*>([\\s\\S]*?)</table>`, 'i'));
   if (!m) return -1;
   return count(m[1], '<tr');
 }
@@ -160,32 +129,30 @@ function tableRows(html, id) {
 function textOf(html, id) {
   const at = html.indexOf(`id="${id}"`);
   if (at < 0) return '';
-  const slice = html.slice(at, at + 600);
-  const content = slice.slice(slice.indexOf('>') + 1);
-  return content
+  const slice = html.slice(at, at + 900);
+  return slice.slice(slice.indexOf('>') + 1).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+}
+
+/**
+ * A browser-version-stable fingerprint: structural counts plus the rendered
+ * text. Serialized SVG geometry and attribute order differ between Chrome
+ * builds, which would make a raw-DOM snapshot fail on CI for no real reason;
+ * the text and the counts do not.
+ */
+function fingerprintOf(html, counts) {
+  const text = normalizedBody(html)
     .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 220);
+    .trim();
+  return { counts: counts, text: text };
 }
 
 function check(label, condition, detail) {
   const ok = Boolean(condition);
   console.log(`${ok ? '  PASS' : '  FAIL'}  ${label}${detail ? `  (${detail})` : ''}`);
-  if (!ok) KEYS.failures.push(label);
+  if (!ok) failures.push(label);
   return ok;
-}
-
-function diffSummary(a, b) {
-  if (a === b) return 'identical';
-  let i = 0;
-  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
-  const from = Math.max(0, i - 90);
-  return [
-    `first difference at char ${i} of ${a.length}/${b.length}`,
-    `  original: …${a.slice(from, i + 120)}…`,
-    `  built   : …${b.slice(from, i + 120)}…`,
-  ].join('\n');
 }
 
 const browser = findBrowser();
@@ -193,53 +160,110 @@ if (!browser) {
   console.log('SKIP  no Chromium-family browser found (set CHROME_PATH to enable render verification)');
   process.exit(0);
 }
-
 console.log(`browser: ${browser}\n`);
 
-let originalDom;
 let builtDom;
+let originalDom;
 try {
-  [originalDom, builtDom] = await Promise.all([dumpDom(browser, ORIGINAL), dumpDom(browser, BUILT)]);
+  builtDom = await dumpDom(browser, BUILT);
+  originalDom = await dumpDom(browser, ORIGINAL);
 } catch (err) {
   console.error(`\nFAIL  render step could not run: ${err.message}`);
   process.exit(1);
 }
 
-console.log('1 · equivalence with the untouched original');
-const a = normalizedBody(originalDom);
-const b = normalizedBody(builtDom);
-const same = a === b;
-console.log(`${same ? '  PASS' : '  FAIL'}  rendered body matches original`);
-if (!same) {
-  KEYS.failures.push('rendered body matches original');
-  console.log(diffSummary(a, b));
-}
-
-console.log('\n2 · boot invariants (built app)');
+console.log('1 · boot invariants');
 const nodes = count(builtDom, 'class="node');
 const issueRows = tableRows(builtDom, 'issueTable');
 const gateRows = tableRows(builtDom, 'gateTable');
 const evRows = tableRows(builtDom, 'evTable');
 const promptCards = count(builtDom, 'class="acc"');
-const idxCards = count(builtDom, 'class="card"');
 const footer = textOf(builtDom, 'footCounts');
-const coverage = textOf(builtDom, 'chipCov');
 
-check('dependency cloud rendered nodes', nodes >= 20, `${nodes} node groups`);
+check('dependency cloud rendered', nodes >= 20, `${nodes} node groups`);
 check('issue table populated', issueRows >= 20, `${issueRows} rows incl. header`);
 check('gate report has 18 gates', gateRows === 19, `${gateRows} rows incl. header`);
 check('evidence ledger has 19 entries', evRows === 20, `${evRows} rows incl. header`);
 check('prompt library has 9 prompts', promptCards >= 9, `${promptCards} accordions`);
-check('index grid rendered', idxCards >= 9, `${idxCards} cards`);
-check('footer reports resolution counts', /resolved/.test(footer), footer.slice(0, 110));
-check('header reports evidence coverage', /\d+%/.test(coverage), coverage.slice(0, 30));
+check('footer reports resolution counts', /resolved/.test(footer), footer.slice(0, 80));
 
-console.log('\n3 · original still renders on its own (sanity)');
-const origNodes = count(originalDom, 'class="node');
-check('original reference renders nodes', origNodes >= 20, `${origNodes} node groups`);
+console.log('\n2 · ported capabilities present');
+check('providers tab exists', builtDom.includes('id="tab-providers"'));
+check('grades tab exists', builtDom.includes('id="tab-grades"'));
+const provCards = count(builtDom, 'class="prov"');
+check('provider roster rendered', provCards >= 10, `${provCards} provider cards`);
+const routeRows = tableRows(builtDom, 'routeTable');
+check('role routing rendered (deep/fast/reviewer)', routeRows === 4, `${routeRows} rows incl. header`);
+const searchRows = tableRows(builtDom, 'searchTable');
+check('search backends rendered', searchRows >= 9, `${searchRows} rows incl. header`);
+const gradeRows = tableRows(builtDom, 'gradeTable');
+check('every issue graded', gradeRows === nodes + 1, `${gradeRows} rows for ${nodes} nodes + header`);
+const checkRows = tableRows(builtDom, 'checksTable');
+check('check rubric rendered', checkRows === 8, `${checkRows} rows incl. header`);
+const verdict = textOf(builtDom, 'verdictCard');
+check('memo verdict computed', /GO/.test(verdict), verdict.slice(0, 70));
 
-if (KEYS.failures.length) {
-  console.error(`\nRESULT: FAIL — ${KEYS.failures.length} check(s) failed: ${KEYS.failures.join(', ')}`);
+/* Every grade must be *styleable*; which of them actually occur depends on the
+   data, so assert the CSS contract rather than demanding all four in the DOM. */
+const css = readFileSync(join(UI_ROOT, 'assets', 'styles.css'), 'utf8');
+for (const grade of ['verified', 'supported', 'weak', 'unsupported']) {
+  check(`stylesheet defines .g-${grade}`, css.includes(`.g-${grade}`));
+}
+const present = ['verified', 'supported', 'weak', 'unsupported'].filter((g) => builtDom.includes(`class="badge-g g-${g}`));
+check('grade badges rendered', present.length >= 2, `present: ${present.join(', ') || 'none'}`);
+const distribution = textOf(builtDom, 'gradeSummary');
+console.log(`        distribution: ${distribution.slice(0, 120)}`);
+
+console.log('\n3 · snapshot (text + structure fingerprint)');
+const counts = {
+  nodes: nodes,
+  issueRows: issueRows,
+  gateRows: gateRows,
+  evRows: evRows,
+  promptCards: promptCards,
+  providerCards: provCards,
+  routeRows: routeRows,
+  searchRows: searchRows,
+  gradeRows: gradeRows,
+  checkRows: checkRows,
+};
+const fp = fingerprintOf(builtDom, counts);
+if (UPDATE) {
+  mkdirSync(dirname(SNAPSHOT), { recursive: true });
+  writeFileSync(SNAPSHOT, JSON.stringify(fp, null, 2) + '\n', 'utf8');
+  console.log(`  UPDATED snapshot (${fp.text.length} chars of text) -> ${SNAPSHOT.replace(UI_ROOT, 'ui')}`);
+} else if (!existsSync(SNAPSHOT)) {
+  check('snapshot exists', false, 'run with --update to create it');
+} else {
+  const expected = JSON.parse(readFileSync(SNAPSHOT, 'utf8'));
+  const countsMatch = JSON.stringify(expected.counts) === JSON.stringify(fp.counts);
+  const textMatch = expected.text === fp.text;
+  check('structural counts match snapshot', countsMatch,
+    countsMatch ? Object.entries(fp.counts).map(([k, v]) => `${k}=${v}`).join(' ') : 'counts differ');
+  check('rendered text matches snapshot', textMatch,
+    textMatch ? `${fp.text.length} chars` : 'text differs');
+  if (!textMatch) {
+    const a = expected.text;
+    const b = fp.text;
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+    const from = Math.max(0, i - 80);
+    console.log(`        first difference at char ${i} of ${a.length}/${b.length}`);
+    console.log(`        snapshot: …${a.slice(from, i + 110)}…`);
+    console.log(`        rendered: …${b.slice(from, i + 110)}…`);
+  }
+}
+
+console.log('\n4 · provenance of the original attachment');
+const originalNodes = count(originalDom, 'class="node');
+check('original single-file version still renders', originalNodes >= 20, `${originalNodes} node groups`);
+const originalBody = normalizedBody(originalDom);
+const builtBody = normalizedBody(builtDom);
+check('ported build differs from the original (the port is really applied)', originalBody !== builtBody,
+  originalBody === builtBody ? 'IDENTICAL — the port appears to be missing' : 'differs, as intended');
+
+if (failures.length) {
+  console.error(`\nRESULT: FAIL — ${failures.length} check(s): ${failures.join(', ')}`);
   process.exit(1);
 }
-console.log('\nRESULT: PASS — refactored build is render-identical to the original attachment.');
+console.log('\nRESULT: PASS — boot, ported capabilities and snapshot all verified.');

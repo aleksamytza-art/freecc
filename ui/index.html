@@ -23,6 +23,8 @@
     <button data-t="evidence">5 · Evidence</button>
     <button data-t="prompts">6 · Prompts</button>
     <button data-t="report">7 · Report</button>
+    <button data-t="providers">8 · Providers</button>
+    <button data-t="grades">9 · Grades</button>
   </nav>
   <div class="hdr-right">
     <span class="chip">project <b id="chipProj">—</b></span>
@@ -115,6 +117,45 @@
     <p class="lead">Replay of the real gate run (2026-10-17, workspace sandbox — authoritative source: <b class="mono">REPORT.md</b>, produced by <b class="mono">gates/run-gates.sh</b>; this panel never edits it, it renders it). Truth rule #1: no result without a gate.</p>
     <div class="row" style="margin-bottom:10px"><button class="btn ghost" id="btnReplay">▶ replay gate run</button><span id="replayState" class="small muted"></span></div>
     <div class="card" style="padding:6px"><table id="gateTable"></table></div>
+  </section>
+
+  <!-- ============ PROVIDERS ============ -->
+  <section id="tab-providers" class="tab">
+    <h2>Free provider roster — who can answer, and in which role</h2>
+    <p class="lead">Ported from <b>free-research-llm</b> (MIT, commit <span class="mono">d5ca596</span>). Three roles, the same split as the router groups: <b class="mono">deep</b> (plan, architect, retries), <b class="mono">fast</b> (every implement and research step) and <b class="mono">reviewer</b> — which must be a <i>different</i> provider from the one that produced the answer, because the verifier is never the doer. A <b style="color:var(--gr)">verified</b> provider is one this machine actually got content back from; the rest are documented upstream but not exercised here.</p>
+
+    <h3>Role routing — first choice wins, a 429 moves to the next</h3>
+    <div class="card" style="padding:6px"><table id="routeTable"></table></div>
+
+    <h3>Providers</h3>
+    <div class="grid" id="provGrid"></div>
+
+    <h3>Search backends — the retrieval half</h3>
+    <p class="lead">A model cannot cite what was never fetched. Retrieval keys are what turn “I think” into “this page says”.</p>
+    <div class="card" style="padding:6px"><table id="searchTable"></table></div>
+
+    <h3>Two rules worth stealing</h3>
+    <div class="card">
+      <p class="small"><b style="color:var(--cy)">1 · Never hard-code a model id.</b> Read the provider's <span class="mono">/models</span> list and pick the best match from an <i>ordered preference list</i>, so a renamed or retired model degrades to the next name instead of stopping the fleet. This repo's own shipped defaults failed exactly this way: <span class="mono">gemini-3-pro</span> never existed and <span class="mono">qwen3-coder:free</span> was withdrawn.</p>
+      <p class="small" style="margin-top:8px"><b style="color:var(--cy)">2 · Filter the model list before trusting it.</b> It is full of embeddings, TTS, vision and guard models; asking one of those for chat burns a request and looks like a router bug. This is the filter the source repo applies:</p>
+      <pre class="tp" id="nonChatRegex"></pre>
+    </div>
+  </section>
+
+  <!-- ============ GRADES ============ -->
+  <section id="tab-grades" class="tab">
+    <h2>Mechanical grades — verified / supported / weak / unsupported</h2>
+    <p class="lead">Ported from <b>free-research-llm</b>, where every answer is graded by checks and never by the model's own confidence. The same rubric applied to the plan: <b>a node marked resolved with no evidence behind it still grades unsupported</b>, because “resolved” is a claim and the grade is a measurement. Critical checks fail the node outright; every other failed check costs one level.</p>
+
+    <div class="row" id="gradeSummary" style="margin-bottom:12px"></div>
+    <div class="card" id="verdictCard"></div>
+
+    <h3>The checks</h3>
+    <div class="card" style="padding:6px"><table id="checksTable"></table></div>
+
+    <h3>Every issue, graded</h3>
+    <p class="lead">Sorted worst first. Click a row to open that issue in the cloud and see its failing checks.</p>
+    <div class="card" style="padding:6px"><table id="gradeTable"></table></div>
   </section>
 </main>
 
@@ -280,6 +321,8 @@ OUTPUT: index table · one change (diff) · prediction + falsifier · gate resul
 
 <!-- ===================== app ===================== -->
 <script src="assets/data.js"></script>
+<script src="assets/providers.js"></script>
+<script src="assets/grades.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

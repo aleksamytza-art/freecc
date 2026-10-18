@@ -81,7 +81,7 @@ node cascade/simulate.mjs --n 1000                # strategy simulation (synthet
 | `cascade/` | zero-dep quality-gated cascade router (OpenAI-compatible, ledger, budget guard) + strategy simulation |
 | `gates/` | the gate runner |
 | `sandbox/` | empirical proof: real `mikoshi-construct` install + real `init` output (`sandbox/demo-lib/`, 44 files) |
-| `ui/` | the interactive app: build wizard, dependency cloud, issue ranking, index register, evidence ledger, prompt library, gate report — zero-dependency, runs offline ([`ui/README.md`](ui/README.md)) |
+| `ui/` | the interactive app: build wizard, dependency cloud, issue ranking, index register, evidence ledger, prompt library, gate report, free-provider roster and mechanical grading with a computed GO/GO-IF/NO-GO verdict — zero-dependency, runs offline ([`ui/README.md`](ui/README.md)) |
 
 ## Interactive UI
 
@@ -91,6 +91,14 @@ marked resolved**. No dependencies, no build step, no network calls — open `ui
 runs, or `npm start` for a local URL.
 
 ![FREECC UI — dependency cloud](ui/docs/preview.png)
+
+Two capabilities are ported from [free-research-llm](https://github.com/bezgolovyponch/free-research-llm)
+(MIT): a **mechanical grading rubric** (`verified / supported / weak / unsupported`, with a
+computed `GO / GO-IF / NO-GO` verdict over the weighted critical path) and the **free-provider
+roster with role routing** (`deep` / `fast` / `reviewer`, where the reviewer is never the provider
+that produced the answer).
+
+![FREECC UI — grades view](ui/docs/preview-grades.png)
 
 ```bash
 cd ui
