@@ -109,3 +109,56 @@
 .rolechip.fast{border-color:var(--bl);color:var(--bl)}
 .rolechip.reviewer{border-color:var(--am);color:var(--am)}
 .v-ok{color:var(--gr);font-weight:700} .v-doc{color:var(--dim)}
+
+/* ---- keyboard + assistive ----
+   Added after the accessibility audit: nothing here changes the visual design
+   at rest, it only makes focus visible and the page skippable. */
+.skip{position:absolute; left:-9999px; top:0; z-index:100; background:var(--cy); color:#06231f;
+  padding:9px 16px; border-radius:0 0 8px 0; font-weight:800; text-decoration:none}
+.skip:focus{left:0}
+a:focus-visible, button:focus-visible, summary:focus-visible,
+input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--cy); outline-offset:2px; border-radius:4px}
+#nav button[role="tab"]:focus-visible{outline-offset:1px}
+.prov a{color:var(--bl)}
+
+/* ---- responsive ----
+   The audit measured documentElement.scrollWidth 1023 against a 512 viewport:
+   the side panel was a fixed 400px and wide tables blew the page out. */
+@media (max-width: 1000px){
+  header{flex-wrap:wrap; row-gap:6px}
+  .hdr-right{margin-left:0; width:100%; justify-content:flex-start; flex-wrap:wrap}
+  #legend{position:static; margin:8px 10px}
+}
+@media (max-width: 900px){
+  #tab-cloud.on{flex-direction:column; overflow:auto}
+  #cloudWrap{flex:1 1 auto; min-height:52vh}
+  #side{flex:0 0 auto; max-width:none; width:100%; border-left:0; border-top:1px solid var(--line)}
+  .card{overflow-x:auto}
+  table{min-width:620px}
+  body{overflow:auto}
+  /* These two rows overflowed because their items are nowrap flex children that
+     cannot shrink: measured scrollWidth 755 against a 512 viewport. Stacking the
+     chips and dropping the rotating ticker (its text repeats in the side panel)
+     removes the overflow without hiding any unique information. */
+  .hdr-right{flex-direction:column; align-items:flex-start; gap:4px}
+  #ticker{display:none}
+  footer{flex-wrap:wrap; row-gap:4px}
+  /* The legend is absolutely positioned on desktop; on a phone it must join the
+     flow, or it spills out of the fixed-height cloud box and overlaps the panel. */
+  #cloudWrap{display:flex; flex-direction:column; flex:0 0 auto; min-height:0}
+  #cloud{flex:0 0 auto; height:44vh}
+  #legend{position:static; order:9; margin:6px 10px; line-height:1.5; font-size:12px}
+}
+@media (max-width: 560px){
+  .grid{grid-template-columns:1fr}
+  section.tab{padding:12px}
+  #cloudTools input{width:120px}
+  .steps{flex-wrap:wrap}
+}
+
+/* ---- reduced motion ---- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important}
+}

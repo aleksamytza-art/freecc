@@ -1,0 +1,137 @@
+{
+  "round": 1,
+  "role": "audit",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "latencyMs": 26414,
+  "timestamp": "2026-10-18T14:39:40.134Z",
+  "auditAtConsult": {
+    "sizes": 112113,
+    "tests": {
+      "suites": [
+        {
+          "file": "tests/data.test.mjs",
+          "pass": 14,
+          "fail": 0,
+          "code": 0,
+          "tail": "enerator lexicon is well formed (1.773ms)\n✔ generated sub-issues cite real evidence and gates (2.7437ms)\n✔ index.html loads the app assets, in order, and nothing external (5.488ms)\n✔ the app is genuinely dependency-free (1.2039ms)\n✔ reference original is preserved for the equivalence proof (5.2813ms)\nℹ tests 14\nℹ suites 0\nℹ pass 14\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 66.2634\n"
+        },
+        {
+          "file": "tests/grades.test.mjs",
+          "pass": 14,
+          "fail": 0,
+          "code": 0,
+          "tail": "iled\" (3.9733ms)\n✔ verified requires both corroboration and a gate (2.8525ms)\n✔ grading is deterministic (0.7181ms)\n✔ a fabricated citation makes a node unsupported, and gaps cannot be verified (0.5952ms)\n✔ grade counts add up (2.7622ms)\n✔ rollup verdict follows the worst grade on the path (0.7452ms)\nℹ tests 14\nℹ suites 0\nℹ pass 14\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 73.3942\n"
+        }
+      ],
+      "pass": 28,
+      "fail": 0
+    },
+    "bootMs": 522,
+    "external": 0,
+    "consoleErrors": 0,
+    "a11y": "3/14",
+    "a11yFailing": [
+      "single-h1",
+      "input-labels",
+      "tablist-role",
+      "tab-roles",
+      "tabpanels",
+      "aria-controls",
+      "live-region",
+      "svg-semantics",
+      "focus-visible",
+      "reduced-motion",
+      "skip-link"
+    ],
+    "responsive": {
+      "width": 512,
+      "scrollWidth": 1023,
+      "overflow": true
+    },
+    "grades": {
+      "verified": 11,
+      "supported": 0,
+      "weak": 17,
+      "unsupported": 1,
+      "graded": 29
+    }
+  },
+  "response": {
+    "summary": "The console suffers from severe mobile viewport horizontal overflow and fails 11 accessibility criteria across ARIA semantics, labelling, navigation, and assistive styling.",
+    "findings": [
+      {
+        "id": "F1",
+        "title": "Mobile viewport horizontal overflow at 512px",
+        "severity": "high",
+        "category": "responsive",
+        "evidence": "Audit responsive check reports width: 512, scrollWidth: 1023, overflow: true.",
+        "fix": "Add a media query in assets/styles.css allowing header, nav buttons, and .hdr-right to wrap, and set min-width: 0 on flex children to prevent fixed-width blowouts.",
+        "acceptance": "Automated viewport test at 512x768 reports document.documentElement.scrollWidth <= 512 with overflow: false."
+      },
+      {
+        "id": "F2",
+        "title": "All form inputs lack accessible labels",
+        "severity": "high",
+        "category": "a11y",
+        "evidence": "Audit a11y check input-labels failed with '13 inputs, 13 unlabelled'.",
+        "fix": "Add explicit <label for=\"...\"> tags or aria-label attributes to all 13 <input> and <textarea> elements across index.html and app.js renderers.",
+        "acceptance": "Audit a11y check input-labels passes with 0 unlabelled inputs."
+      },
+      {
+        "id": "F3",
+        "title": "Navigation tablist and tabpanel ARIA semantics are missing",
+        "severity": "high",
+        "category": "a11y",
+        "evidence": "Audit a11y checks tablist-role, tab-roles, tabpanels, and aria-controls all fail for the 9-tab navigation.",
+        "fix": "Add role=\"tablist\" to <nav id=\"nav\">, role=\"tab\" with aria-selected and aria-controls=\"tab-<id>\" to nav buttons, and role=\"tabpanel\" with aria-labelledby to each section.tab.",
+        "acceptance": "Audit a11y checks tablist-role, tab-roles, tabpanels, and aria-controls all evaluate to pass: true."
+      },
+      {
+        "id": "F4",
+        "title": "Document lacks a top-level <h1> heading",
+        "severity": "medium",
+        "category": "a11y",
+        "evidence": "Audit a11y check single-h1 failed with '0 found'.",
+        "fix": "Change <div class=\"logo\"> in index.html to <h1 class=\"logo\"> to establish the required single primary heading.",
+        "acceptance": "Audit a11y check single-h1 evaluates to pass: true with exactly 1 <h1> found in DOM."
+      },
+      {
+        "id": "F5",
+        "title": "Missing keyboard skip link to main content",
+        "severity": "medium",
+        "category": "a11y",
+        "evidence": "Audit a11y check skip-link failed.",
+        "fix": "Add <a href=\"#main\" class=\"skip-link\">Skip to main content</a> before <header> in index.html, id=\"main\" to <main>, and style .skip-link in assets/styles.css to appear on :focus.",
+        "acceptance": "Audit a11y check skip-link evaluates to pass: true and Tab from initial focus navigates to #main."
+      },
+      {
+        "id": "F6",
+        "title": "Toast message container is not an ARIA live region",
+        "severity": "medium",
+        "category": "a11y",
+        "evidence": "Audit a11y check live-region failed for #toast.",
+        "fix": "Add role=\"status\" and aria-live=\"polite\" attributes to <div id=\"toast\"> in index.html.",
+        "acceptance": "Audit a11y check live-region evaluates to pass: true."
+      },
+      {
+        "id": "F7",
+        "title": "Cloud SVG graph lacks accessible name and semantics",
+        "severity": "medium",
+        "category": "a11y",
+        "evidence": "Audit a11y check svg-semantics failed.",
+        "fix": "Add role=\"img\" and aria-label=\"Dependency cloud graph\" to <svg id=\"cloud\"> in index.html.",
+        "acceptance": "Audit a11y check svg-semantics evaluates to pass: true."
+      },
+      {
+        "id": "F8",
+        "title": "Missing CSS :focus-visible indicators and prefers-reduced-motion query",
+        "severity": "medium",
+        "category": "a11y",
+        "evidence": "Audit a11y checks focus-visible and reduced-motion both failed.",
+        "fix": "Add :focus-visible rules with high-contrast outlines for interactive elements and a @media (prefers-reduced-motion: reduce) rule disabling animations and transitions in assets/styles.css.",
+        "acceptance": "Audit a11y checks focus-visible and reduced-motion both evaluate to pass: true."
+      }
+    ]
+  }
+}

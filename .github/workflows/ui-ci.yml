@@ -43,3 +43,8 @@ jobs:
 
       - name: Render equivalence + boot checks
         run: node scripts/verify-render.mjs
+
+      # The scorecard from ui/QUALITY.md, enforced. A11y, console errors, external
+      # requests, overflow and payload size all fail the build if they regress.
+      - name: Quality scorecard (strict)
+        run: node scripts/audit.mjs --strict

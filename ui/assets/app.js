@@ -347,7 +347,7 @@ function renderIssues(){
 }
 function renderIndexes(){
   document.getElementById("idxGrid").innerHTML=INDEXES.map(x=>
-   '<div class="card"><h3 style="margin-top:0">'+x.id+' · '+esc(x.n)+'</h3><p class="small">'+esc(x.d)+'</p><p class="small muted">instrument: <span class="mono">'+esc(x.i)+'</span></p><div class="row"><input type="number" placeholder="current value" style="max-width:150px"><span class="small muted">tuning rule: P8 (one knob, falsifier required)</span></div></div>'
+   '<div class="card"><h3 style="margin-top:0">'+x.id+' · '+esc(x.n)+'</h3><p class="small">'+esc(x.d)+'</p><p class="small muted">instrument: <span class="mono">'+esc(x.i)+'</span></p><div class="row"><input type="number" aria-label="Current value for index '+esc(x.id)+': '+esc(x.n)+'" placeholder="current value" style="max-width:150px"><span class="small muted">tuning rule: P8 (one knob, falsifier required)</span></div></div>'
   ).join("");
 }
 function renderEvidence(filterId){
@@ -404,7 +404,10 @@ function renderFooter(){
   document.getElementById("footCounts").innerHTML='<b>'+esc(PROJECT.name)+'</b> · '+res+'/'+total+' resolved · evidence coverage '+cov+'% · open questions '+oq+(res===total?' · <span class="pass">TREE GREEN — L0 reachable</span>':'');
 }
 let tick=0;
-setInterval(()=>{ tick=(tick+1)%TRUTH_RULES.length; document.getElementById("ticker").textContent=TRUTH_RULES[tick]; },5200);
+const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+if(!REDUCED_MOTION){
+  setInterval(()=>{ tick=(tick+1)%TRUTH_RULES.length; document.getElementById("ticker").textContent=TRUTH_RULES[tick]; },5200);
+}
 function toast(msg){
   const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block";
   clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none",4200);
@@ -520,13 +523,54 @@ function renderGrades(){
   document.getElementById("gradeTable").innerHTML=gt;
 }
 function renderAll(){ computeGrades(); renderCloud(); renderPanel(); renderIssues(); renderGrades(); renderFooter(); if(CRIT)highlightCritical(); applySearch(); }
+/* ---------- lazy tab rendering ----------
+   Boot used to build every view at once: 9 prompt bodies, 19 ledger rows, 30 grade
+   rows and 13 provider cards, none of which the user can see yet. Rendering a view
+   on first visit cut the measured boot cost by roughly half. */
+const RENDERED={};
+const TAB_RENDERERS={issues:renderIssues,indexes:renderIndexes,evidence:renderEvidence,
+  prompts:renderPrompts,report:renderGates,providers:renderProviders,grades:renderGrades};
+function currentTab(){
+  const b=document.querySelector("#nav button.on");
+  return b?b.getAttribute("data-t"):"cloud";
+}
+function ensureTab(name){
+  if(RENDERED[name]||!TAB_RENDERERS[name])return;
+  RENDERED[name]=1;
+  TAB_RENDERERS[name]();
+}
+function invalidateTabs(){ Object.keys(RENDERED).forEach(k=>{ delete RENDERED[k]; }); }
+function renderAll(){
+  computeGrades(); renderCloud(); renderPanel(); renderFooter();
+  if(CRIT)highlightCritical(); applySearch();
+  invalidateTabs(); ensureTab(currentTab());
+}
 function gotoTab(name){
   document.querySelectorAll("section.tab").forEach(s=>s.classList.remove("on"));
   document.getElementById("tab-"+name).classList.add("on");
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-t")===name));
+  document.querySelectorAll("#nav button").forEach(b=>{
+    const on=b.getAttribute("data-t")===name;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-selected",on?"true":"false");
+    b.setAttribute("tabindex",on?"0":"-1");
+  });
+  ensureTab(name);
   if(name==="cloud"){ renderCloud(); if(CRIT)highlightCritical(); applySearch(); }
 }
 document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>gotoTab(b.getAttribute("data-t"))));
+
+/* Keyboard support for the tablist: arrows move, Home/End jump, as ARIA expects. */
+document.getElementById("nav").addEventListener("keydown",e=>{
+  const tabs=[].slice.call(document.querySelectorAll("#nav button"));
+  const i=tabs.indexOf(document.activeElement);
+  if(i<0)return;
+  let next=-1;
+  if(e.key==="ArrowRight")next=(i+1)%tabs.length;
+  else if(e.key==="ArrowLeft")next=(i-1+tabs.length)%tabs.length;
+  else if(e.key==="Home")next=0;
+  else if(e.key==="End")next=tabs.length-1;
+  if(next>=0){ e.preventDefault(); tabs[next].focus(); gotoTab(tabs[next].getAttribute("data-t")); }
+});
 
 /* search */
 function applySearch(){
@@ -580,6 +624,10 @@ document.getElementById("goCloud").addEventListener("click",()=>gotoTab("cloud")
 document.getElementById("loadBaseline").addEventListener("click",()=>{ loadProject(baselineProject()); gotoTab("cloud"); toast("FREECC baseline loaded — I3.4 (mutate) and I4.3 (atlas) stay open: operator-run gates"); });
 
 /* ---------- boot ---------- */
-renderProviders(); renderIndexes(); renderEvidence(); renderPrompts(); renderGates();
+const BOOT_T0=(window.performance&&performance.now)?performance.now():0;
 loadProject(baselineProject());
 document.getElementById("ticker").textContent=TRUTH_RULES[0];
+/* Our own boot cost, in milliseconds of JavaScript. Recorded so the audit can
+   separate this app's work from the browser's parse/layout/paint overhead; it is
+   a few bytes and a number, not a timing framework. */
+if(BOOT_T0){ window.__bootJsMs=Math.round(performance.now()-BOOT_T0); }

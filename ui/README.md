@@ -107,12 +107,47 @@ assets/grades.js        the mechanical grading rubric + verdict roll-up
 assets/app.js           engine (detection, generation, ordering, layout),
                         SVG cloud, panels, tables, wizard, providers, grades, boot
 scripts/serve.mjs       zero-dependency static server
+scripts/audit.mjs       the scorecard: sizes, tests, boot, a11y, responsive, grades
 scripts/verify-render.mjs  headless-browser boot + port + snapshot checks
 tests/data.test.mjs     data invariants (node:test)
 tests/grades.test.mjs   rubric + roster invariants (node:test)
 tests/snapshots/        rendered-DOM regression snapshot
+QUALITY.md              the targets this app is measured against (machine + manual)
 reference/              the original single-file attachment, untouched
 ```
+
+## Quality, not vibes
+
+**[QUALITY.md](QUALITY.md)** is the scorecard: it separates what a script can prove from what a
+human must look at, and `scripts/audit.mjs` produces the numbers.
+
+```bash
+node scripts/audit.mjs            # human-readable scorecard
+node scripts/audit.mjs --json     # what the improvement loop consumes
+node scripts/audit.mjs --strict   # the CI gate: a11y / console / overflow / payload
+```
+
+The audit drives a real headless browser with an injected probe, so it measures rather than
+assumes: uncaught errors and `console.error`, external requests via Resource Timing, the app's own
+JavaScript boot time via `performance.now`, horizontal overflow at a phone viewport **and which
+elements cause it**, plus 14 accessibility heuristics over the rendered DOM.
+
+| Measured | Before | Now |
+|---|---|---|
+| Accessibility heuristics | 3 / 14 | **14 / 14** |
+| Overflow at a phone viewport | yes (1023 px vs 512) | **none** |
+| DOM nodes built at boot | 2147 | **430** (lazy tabs) |
+| App JS boot | — | **45 ms** |
+| Console errors · external requests | 0 · 0 | **0 · 0** |
+
+Accessibility work: one `<h1>`, a skip link, ARIA `tablist` / `tab` / `tabpanel` with
+`aria-selected` and `aria-controls`, arrow-key + Home/End navigation with roving `tabindex`, a
+label on every input (including JS-rendered ones), `role="status"` on the toast, `:focus-visible`
+outlines, a `prefers-reduced-motion` branch that also stops the rotating ticker, and the decorative
+cloud SVG marked `aria-hidden` because the Issues table is its accessible equivalent.
+
+The improvement loop that produced these numbers — audits, LLM findings, what was accepted, and
+what was rejected — is recorded in [`../loop/ROUND-LOG.md`](../loop/ROUND-LOG.md).
 
 ## Verification
 

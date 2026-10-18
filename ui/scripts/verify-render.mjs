@@ -32,6 +32,15 @@ const BUILT = join(UI_ROOT, 'index.html');
 const SNAPSHOT = join(UI_ROOT, 'tests', 'snapshots', 'fingerprint.json');
 const UPDATE = process.argv.includes('--update');
 
+/* Tabs render lazily, so a plain dump of index.html only contains the cloud view.
+   This visits every view before the DOM is serialized, which is what makes the
+   table/badge assertions and the snapshot meaningful. */
+const VISIT_ALL = `<script>
+(function(){ ['build','cloud','issues','indexes','evidence','prompts','report','providers','grades']
+  .forEach(function(t){ try{ gotoTab(t); }catch(e){} });
+  try{ gotoTab('cloud'); }catch(e){} })();
+</script>`;
+
 const failures = [];
 
 function findBrowser() {
@@ -164,12 +173,16 @@ console.log(`browser: ${browser}\n`);
 
 let builtDom;
 let originalDom;
+const instrumented = join(UI_ROOT, '_verify.html');
 try {
-  builtDom = await dumpDom(browser, BUILT);
+  writeFileSync(instrumented, readFileSync(BUILT, 'utf8').replace('</body>', VISIT_ALL + '\n</body>'), 'utf8');
+  builtDom = await dumpDom(browser, instrumented);
   originalDom = await dumpDom(browser, ORIGINAL);
 } catch (err) {
   console.error(`\nFAIL  render step could not run: ${err.message}`);
   process.exit(1);
+} finally {
+  try { rmSync(instrumented, { force: true }); } catch { /* ignore */ }
 }
 
 console.log('1 · boot invariants');

@@ -1,0 +1,89 @@
+{
+  "round": 2,
+  "role": "review",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "latencyMs": 2211,
+  "timestamp": "2026-10-18T14:44:20.197Z",
+  "auditAtConsult": {
+    "sizes": 117971,
+    "tests": {
+      "suites": [
+        {
+          "file": "tests/data.test.mjs",
+          "pass": 14,
+          "fail": 0,
+          "code": 0,
+          "tail": "enerator lexicon is well formed (1.0001ms)\n✔ generated sub-issues cite real evidence and gates (2.1214ms)\n✔ index.html loads the app assets, in order, and nothing external (4.1112ms)\n✔ the app is genuinely dependency-free (0.795ms)\n✔ reference original is preserved for the equivalence proof (1.5469ms)\nℹ tests 14\nℹ suites 0\nℹ pass 14\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 40.809\n"
+        },
+        {
+          "file": "tests/grades.test.mjs",
+          "pass": 14,
+          "fail": 0,
+          "code": 0,
+          "tail": "iled\" (2.4525ms)\n✔ verified requires both corroboration and a gate (2.9102ms)\n✔ grading is deterministic (0.6826ms)\n✔ a fabricated citation makes a node unsupported, and gaps cannot be verified (0.3945ms)\n✔ grade counts add up (1.7174ms)\n✔ rollup verdict follows the worst grade on the path (0.6121ms)\nℹ tests 14\nℹ suites 0\nℹ pass 14\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 50.0823\n"
+        }
+      ],
+      "pass": 28,
+      "fail": 0
+    },
+    "bootMs": 332,
+    "external": 0,
+    "consoleErrors": 0,
+    "a11y": "14/14",
+    "a11yFailing": [],
+    "responsive": {
+      "width": 512,
+      "scrollWidth": 512,
+      "overflow": false,
+      "offenders": []
+    },
+    "grades": {
+      "verified": 11,
+      "supported": 0,
+      "weak": 17,
+      "unsupported": 1,
+      "graded": 29
+    }
+  },
+  "response": {
+    "verdict": "fail",
+    "confirmed": [
+      "Q1: The app loads all assets (index.html, styles.css, data.js, providers.js, grades.js, app.js) from the same origin with no external requests (audit.browser.externalRequests empty).",
+      "Q2: No console errors are emitted during load (audit.browser.consoleErrors empty).",
+      "Q3: All accessibility checks pass (audit.browser.a11y.pass 14, fail 0).",
+      "Q4: All unit tests pass (audit.tests.pass 28, fail 0).",
+      "Q5: The app is dependency‑free (tests report “the app is genuinely dependency‑free”).",
+      "Q6: The HTML includes a single <h1> and a lang attribute (a11y checks).",
+      "Q7: All buttons and inputs have accessible names/labels (a11y checks).",
+      "Q8: The navigation uses proper ARIA roles for tabs (a11y checks).",
+      "Q9: CSS defines :focus-visible and respects prefers‑reduced‑motion (a11y checks).",
+      "Q10: The cloud SVG is labelled or hidden (a11y check)."
+    ],
+    "unproven": [
+      "Q11: Evidence coverage percentage shown in the UI matches the actual proportion of supported issues.",
+      "Q12: The total bundle size stays under any stipulated limit (no limit provided in material).",
+      "Q13: Performance budgets for boot time, appJsMs, etc., meet the scorecard thresholds.",
+      "Q14: The “critical‑path” grade computation correctly follows the worst‑grade‑on‑path rule for all possible issue graphs.",
+      "Q15: The UI correctly updates the “resolved” chip count after issue resolution."
+    ],
+    "findings": [
+      {
+        "id": "R1",
+        "title": "Critical‑path issue lacking evidence",
+        "severity": "high",
+        "evidence": "audit.browser.verdict contains \"NO‑GO... 1 critical‑path issue(s) have no evidence behind them\" and grades show 1 unsupported grade out of 29.",
+        "fix": "Ensure every issue on the critical path has at least one corroborating citation and an associated gate; update the data generation to include evidence for those nodes.",
+        "acceptance": "Verified when the unsupported grade count drops to zero and the verdict changes to a passing state."
+      },
+      {
+        "id": "R2",
+        "title": "Evidence coverage UI shows 0% despite existing data",
+        "severity": "medium",
+        "evidence": "The header chip displays \"evidence coverage 0%\" while tests confirm that generated sub‑issues cite real evidence (tests/data.test.mjs passes \"generated sub‑issues cite real evidence\").",
+        "fix": "Calculate coverage based on the ratio of supported/verified issues and update the chip text accordingly.",
+        "acceptance": "Coverage chip reflects a non‑zero percentage when evidence exists."
+      }
+    ]
+  }
+}

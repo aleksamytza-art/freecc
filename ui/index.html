@@ -12,19 +12,20 @@
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to main content</a>
 
 <header>
-  <div class="logo">FREECC <small>· decomposition &amp; agent UI · gate-disciplined</small></div>
-  <nav id="nav">
-    <button data-t="build">1 · Build</button>
-    <button data-t="cloud" class="on">2 · Dependency Cloud</button>
-    <button data-t="issues">3 · Issues</button>
-    <button data-t="indexes">4 · Indexes</button>
-    <button data-t="evidence">5 · Evidence</button>
-    <button data-t="prompts">6 · Prompts</button>
-    <button data-t="report">7 · Report</button>
-    <button data-t="providers">8 · Providers</button>
-    <button data-t="grades">9 · Grades</button>
+  <h1 class="logo">FREECC <small>· decomposition &amp; agent UI · gate-disciplined</small></h1>
+  <nav id="nav" role="tablist" aria-label="Views">
+    <button id="tabbtn-build" data-t="build" role="tab" aria-selected="false" aria-controls="tab-build">1 · Build</button>
+    <button id="tabbtn-cloud" data-t="cloud" role="tab" aria-selected="true" aria-controls="tab-cloud" class="on">2 · Dependency Cloud</button>
+    <button id="tabbtn-issues" data-t="issues" role="tab" aria-selected="false" aria-controls="tab-issues">3 · Issues</button>
+    <button id="tabbtn-indexes" data-t="indexes" role="tab" aria-selected="false" aria-controls="tab-indexes">4 · Indexes</button>
+    <button id="tabbtn-evidence" data-t="evidence" role="tab" aria-selected="false" aria-controls="tab-evidence">5 · Evidence</button>
+    <button id="tabbtn-prompts" data-t="prompts" role="tab" aria-selected="false" aria-controls="tab-prompts">6 · Prompts</button>
+    <button id="tabbtn-report" data-t="report" role="tab" aria-selected="false" aria-controls="tab-report">7 · Report</button>
+    <button id="tabbtn-providers" data-t="providers" role="tab" aria-selected="false" aria-controls="tab-providers">8 · Providers</button>
+    <button id="tabbtn-grades" data-t="grades" role="tab" aria-selected="false" aria-controls="tab-grades">9 · Grades</button>
   </nav>
   <div class="hdr-right">
     <span class="chip">project <b id="chipProj">—</b></span>
@@ -33,19 +34,19 @@
   </div>
 </header>
 
-<main>
+<main id="main">
   <!-- ============ BUILD ============ -->
-  <section id="tab-build" class="tab">
+  <section id="tab-build" class="tab" role="tabpanel" aria-labelledby="tabbtn-build">
     <h2>Enter the project — describe the output; the P0 methodology does the decomposition</h2>
     <p class="lead">This wizard is prompt <b class="mono">P0</b> (research &amp; decompose) encoded as an interface: your desired result becomes <b>L0</b>, detected outcome-domains become <b>L0.x</b>, the proven FREECC engine (L1 → C1–C5 → 18 sub-issues, all gate-backed) is attached underneath, and every generated issue carries variables, roles, method→evidence links (E#), a spectral index (I#), a mechanical gate (G#) and the recommended prompt (P#). Truth rule enforced by the UI: <b>an issue with an evidence gap cannot be marked resolved</b> — it must go through P0 step 2 first.</p>
     <div class="steps"><span id="st1" class="on">1 · Describe</span><span id="st2">2 · Scope</span><span id="st3">3 · Generate</span></div>
     <div class="card" id="wiz1">
       <h3>Desired result (state it first — the root of the tree)</h3>
-      <textarea id="inDesc" placeholder="e.g. Paid bookings per week for travel destinations D, fed by qualified leads from SEO landing pages and email campaigns, produced and maintained at $0 marginal model cost."></textarea>
+      <textarea id="inDesc" aria-label="Desired result" placeholder="e.g. Paid bookings per week for travel destinations D, fed by qualified leads from SEO landing pages and email campaigns, produced and maintained at $0 marginal model cost."></textarea>
       <div class="row" style="margin-top:10px">
-        <div style="flex:1; min-width:200px"><h3>Inputs provided</h3><input type="text" id="inInputs" placeholder="destination list, brand assets, payment provider, repos…"></div>
-        <div style="flex:1; min-width:200px"><h3>Budget</h3><input type="text" id="inBudget" placeholder="$0 routine / ≤$5 anchor"></div>
-        <div style="flex:1; min-width:200px"><h3>Deadline</h3><input type="text" id="inDeadline" placeholder="first funnel live in 7 days"></div>
+        <div style="flex:1; min-width:200px"><h3>Inputs provided</h3><input type="text" id="inInputs" aria-label="Inputs provided" placeholder="destination list, brand assets, payment provider, repos…"></div>
+        <div style="flex:1; min-width:200px"><h3>Budget</h3><input type="text" id="inBudget" aria-label="Budget" placeholder="$0 routine / ≤$5 anchor"></div>
+        <div style="flex:1; min-width:200px"><h3>Deadline</h3><input type="text" id="inDeadline" aria-label="Deadline" placeholder="first funnel live in 7 days"></div>
       </div>
       <div class="row" style="margin-top:12px"><button class="btn" id="wizNext">Detect components →</button><button class="btn dim" id="loadBaseline">Load FREECC baseline tree instead</button></div>
     </div>
@@ -63,15 +64,15 @@
   </section>
 
   <!-- ============ CLOUD ============ -->
-  <section id="tab-cloud" class="tab on">
+  <section id="tab-cloud" class="tab on" role="tabpanel" aria-labelledby="tabbtn-cloud">
     <div id="cloudWrap">
       <div id="cloudTools">
-        <input type="text" id="search" placeholder="search id / title…">
+        <input type="text" id="search" aria-label="Search issues by id or title" placeholder="search id / title…">
         <button class="btn dim" id="btnFit">fit</button>
         <button class="btn dim" id="btnRelax">re-layout</button>
         <button class="btn dim" id="btnCritical">critical chain</button>
       </div>
-      <svg id="cloud" xmlns="http://www.w3.org/2000/svg"></svg>
+      <svg id="cloud" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"></svg>
       <div id="legend">
         <span class="dot" style="background:var(--gr)"></span>resolved (gate green)
         <span class="dot" style="background:var(--am)"></span>open/actionable
@@ -84,35 +85,35 @@
   </section>
 
   <!-- ============ ISSUES ============ -->
-  <section id="tab-issues" class="tab">
+  <section id="tab-issues" class="tab" role="tabpanel" aria-labelledby="tabbtn-issues">
     <h2>All issues — sorted by importance of resolving (unlock power)</h2>
     <p class="lead">Priority = own weight + total weight of everything this issue transitively unlocks. Atomic blockers rank top: resolving them frees the largest part of the tree. Click a row to open it in the cloud.</p>
     <div class="card" style="padding:6px"><table id="issueTable"></table></div>
   </section>
 
   <!-- ============ INDEXES ============ -->
-  <section id="tab-indexes" class="tab">
+  <section id="tab-indexes" class="tab" role="tabpanel" aria-labelledby="tabbtn-indexes">
     <h2>Spectral indexes I1–I9 — the measurable layer</h2>
     <p class="lead">Each index has an instrument (a real file/command that reads it) and a tuning rule in <b class="mono">P8</b>. Values are session-local; wire them to <b class="mono">.construct/runs.jsonl</b>, <b class="mono">cascade/ledger.jsonl</b> and <b class="mono">construct cost --json</b> in production.</p>
     <div class="grid" id="idxGrid"></div>
   </section>
 
   <!-- ============ EVIDENCE ============ -->
-  <section id="tab-evidence" class="tab">
+  <section id="tab-evidence" class="tab" role="tabpanel" aria-labelledby="tabbtn-evidence">
     <h2>Evidence ledger E1–E19 — no strategy without a ledger ID</h2>
     <p class="lead">Type: <b>P</b> primary (vendor/paper) · <b>S</b> secondary (re-verify before reliance) · <b>E</b> empirical (executed in the workspace sandbox, reproducible via gates). The prompt-library validator (G16) fails the build if any prompt cites an E# missing here.</p>
     <div class="card" style="padding:6px"><table id="evTable"></table></div>
   </section>
 
   <!-- ============ PROMPTS ============ -->
-  <section id="tab-prompts" class="tab">
+  <section id="tab-prompts" class="tab" role="tabpanel" aria-labelledby="tabbtn-prompts">
     <h2>Prompt library P0–P8 — the definitive instructions</h2>
     <p class="lead">Machine-validated by <b class="mono">prompts/validate.mjs</b> (gate G16). Each issue in the cloud recommends one; copy it into your harness (Claude Code via router, OpenCode, or any agent) with the issue's context pointers.</p>
     <div id="promptList"></div>
   </section>
 
   <!-- ============ REPORT ============ -->
-  <section id="tab-report" class="tab">
+  <section id="tab-report" class="tab" role="tabpanel" aria-labelledby="tabbtn-report">
     <h2>Mechanical gates G01–G18 — the only definition of “done”</h2>
     <p class="lead">Replay of the real gate run (2026-10-17, workspace sandbox — authoritative source: <b class="mono">REPORT.md</b>, produced by <b class="mono">gates/run-gates.sh</b>; this panel never edits it, it renders it). Truth rule #1: no result without a gate.</p>
     <div class="row" style="margin-bottom:10px"><button class="btn ghost" id="btnReplay">▶ replay gate run</button><span id="replayState" class="small muted"></span></div>
@@ -120,7 +121,7 @@
   </section>
 
   <!-- ============ PROVIDERS ============ -->
-  <section id="tab-providers" class="tab">
+  <section id="tab-providers" class="tab" role="tabpanel" aria-labelledby="tabbtn-providers">
     <h2>Free provider roster — who can answer, and in which role</h2>
     <p class="lead">Ported from <b>free-research-llm</b> (MIT, commit <span class="mono">d5ca596</span>). Three roles, the same split as the router groups: <b class="mono">deep</b> (plan, architect, retries), <b class="mono">fast</b> (every implement and research step) and <b class="mono">reviewer</b> — which must be a <i>different</i> provider from the one that produced the answer, because the verifier is never the doer. A <b style="color:var(--gr)">verified</b> provider is one this machine actually got content back from; the rest are documented upstream but not exercised here.</p>
 
@@ -143,7 +144,7 @@
   </section>
 
   <!-- ============ GRADES ============ -->
-  <section id="tab-grades" class="tab">
+  <section id="tab-grades" class="tab" role="tabpanel" aria-labelledby="tabbtn-grades">
     <h2>Mechanical grades — verified / supported / weak / unsupported</h2>
     <p class="lead">Ported from <b>free-research-llm</b>, where every answer is graded by checks and never by the model's own confidence. The same rubric applied to the plan: <b>a node marked resolved with no evidence behind it still grades unsupported</b>, because “resolved” is a claim and the grade is a measurement. Critical checks fail the node outright; every other failed check costs one level.</p>
 
@@ -166,7 +167,7 @@
   <span class="chip">per-day: <b>quota pool + failover (G09/G10)</b></span>
   <div id="ticker"></div>
 </footer>
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- ===================== prompt templates (raw text, copied verbatim) ===================== -->
 <script type="text/template" id="tpl-P0">
